@@ -507,7 +507,7 @@ export function InternalPatternsPage() {
                 {selectedPattern.filters && Object.keys(selectedPattern.filters).length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900 mb-3">Applied Filters</h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-3">
                       {Object.entries(selectedPattern.filters).map(([key, values]) => {
                         // Skip rendering for certain keys or handle them specially
                         if (key === 'keywords') {
@@ -515,14 +515,34 @@ export function InternalPatternsPage() {
                           const allKeywords = Array.isArray(values) ? values : [];
                           if (allKeywords.length === 0) return null;
                           
+                          // Clean keywords by removing brackets and quotes
+                          const cleanedKeywords = allKeywords.map((kw: any) => 
+                            String(kw).replace(/[\[\]"']/g, '').trim()
+                          ).filter(Boolean);
+                          
+                          // Limit to 5 keywords
+                          const displayKeywords = cleanedKeywords.slice(0, 5);
+                          const hasMore = cleanedKeywords.length > 5;
+                          
                           return (
-                            <Badge 
-                              key={key}
-                              className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                            >
-                              <span className="font-semibold">Keywords:</span>
-                              <span className="ml-1">{allKeywords.join(', ')}</span>
-                            </Badge>
+                            <div key={key} className="space-y-2">
+                              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Keywords</div>
+                              <div className="flex flex-wrap gap-2">
+                                {displayKeywords.map((keyword, idx) => (
+                                  <Badge 
+                                    key={idx}
+                                    className="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow"
+                                  >
+                                    {keyword}
+                                  </Badge>
+                                ))}
+                                {hasMore && (
+                                  <Badge className="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1.5">
+                                    +{cleanedKeywords.length - 5} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           );
                         }
                         
@@ -531,13 +551,12 @@ export function InternalPatternsPage() {
                           const range = values as any;
                           if (typeof range === 'object' && range !== null) {
                             return (
-                              <Badge 
-                                key={key}
-                                className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                              >
-                                <span className="font-semibold">Priority Range:</span>
-                                <span className="ml-1">P{range.min} - P{range.max}</span>
-                              </Badge>
+                              <div key={key} className="space-y-2">
+                                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority Range</div>
+                                <Badge className="bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 shadow-sm">
+                                  P{range.min} - P{range.max}
+                                </Badge>
+                              </div>
                             );
                           }
                           return null;
@@ -556,13 +575,25 @@ export function InternalPatternsPage() {
                           if (sentimentLabels.length === 0) return null;
                           
                           return (
-                            <Badge 
-                              key={key}
-                              className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                            >
-                              <span className="font-semibold">Sentiments:</span>
-                              <span className="ml-1">{sentimentLabels.join(', ')}</span>
-                            </Badge>
+                            <div key={key} className="space-y-2">
+                              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Sentiments</div>
+                              <div className="flex flex-wrap gap-2">
+                                {sentimentLabels.map((label, idx) => (
+                                  <Badge 
+                                    key={idx}
+                                    className={
+                                      label === 'Negative' 
+                                        ? "bg-gradient-to-br from-red-50 to-red-100 text-red-700 border border-red-200 px-3 py-1.5 shadow-sm"
+                                        : label === 'Positive'
+                                        ? "bg-gradient-to-br from-green-50 to-green-100 text-green-700 border border-green-200 px-3 py-1.5 shadow-sm"
+                                        : "bg-gradient-to-br from-slate-50 to-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 shadow-sm"
+                                    }
+                                  >
+                                    {label}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
                           );
                         }
                         
@@ -573,13 +604,12 @@ export function InternalPatternsPage() {
                             const startDate = new Date(range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                             const endDate = new Date(range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                             return (
-                              <Badge 
-                                key={key}
-                                className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                              >
-                                <span className="font-semibold">Time Range:</span>
-                                <span className="ml-1">{startDate} - {endDate}</span>
-                              </Badge>
+                              <div key={key} className="space-y-2">
+                                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Time Range</div>
+                                <Badge className="bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 border border-purple-200 px-3 py-1.5 shadow-sm">
+                                  {startDate} - {endDate}
+                                </Badge>
+                              </div>
                             );
                           }
                           return null;
@@ -589,26 +619,40 @@ export function InternalPatternsPage() {
                         if (Array.isArray(values)) {
                           if (values.length === 0) return null;
                           
+                          // Limit to 5 items
+                          const displayValues = values.slice(0, 5);
+                          const hasMore = values.length > 5;
+                          
                           return (
-                            <Badge 
-                              key={key}
-                              className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                            >
-                              <span className="font-semibold capitalize">{key.replace(/_/g, ' ')}:</span>
-                              <span className="ml-1">{values.join(', ')}</span>
-                            </Badge>
+                            <div key={key} className="space-y-2">
+                              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{key.replace(/_/g, ' ')}</div>
+                              <div className="flex flex-wrap gap-2">
+                                {displayValues.map((val, idx) => (
+                                  <Badge 
+                                    key={idx}
+                                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow capitalize"
+                                  >
+                                    {String(val)}
+                                  </Badge>
+                                ))}
+                                {hasMore && (
+                                  <Badge className="bg-slate-100 text-slate-500 border border-slate-200 px-3 py-1.5">
+                                    +{values.length - 5} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           );
                         }
                         
                         // Handle single values
                         return (
-                          <Badge 
-                            key={key}
-                            className="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 border border-slate-300 px-3 py-1"
-                          >
-                            <span className="font-semibold capitalize">{key.replace(/_/g, ' ')}:</span>
-                            <span className="ml-1">{String(values)}</span>
-                          </Badge>
+                          <div key={key} className="space-y-2">
+                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{key.replace(/_/g, ' ')}</div>
+                            <Badge className="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 shadow-sm capitalize">
+                              {String(values)}
+                            </Badge>
+                          </div>
                         );
                       })}
                     </div>
