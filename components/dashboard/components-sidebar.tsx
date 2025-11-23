@@ -40,38 +40,25 @@ export function ComponentsSidebar({
     event.dataTransfer.setData("text/plain", componentId)
     event.dataTransfer.effectAllowed = "copy"
 
-    // Get the actual grid size for this component type
-    const gridSize = getDragPreviewSize?.(componentId)
+    // Create an invisible drag image
+    const dragImage = document.createElement("div")
+    dragImage.style.position = "absolute"
+    dragImage.style.top = "-9999px"
+    dragImage.style.left = "-9999px"
+    dragImage.style.width = "1px"
+    dragImage.style.height = "1px"
+    dragImage.style.opacity = "0"
+    document.body.appendChild(dragImage)
 
-    if (gridSize) {
-      // Create a drag preview that matches the grid item size
-      const dragImage = document.createElement("div")
-      dragImage.style.position = "absolute"
-      dragImage.style.top = "-9999px"
-      dragImage.style.left = "-9999px"
-      dragImage.style.width = `${gridSize.width}px`
-      dragImage.style.height = `${gridSize.height}px`
-      dragImage.style.background = "rgba(59, 130, 246, 0.2)"
-      dragImage.style.border = "2px dashed rgba(59, 130, 246, 0.5)"
-      dragImage.style.borderRadius = "8px"
-      dragImage.style.pointerEvents = "none"
-      document.body.appendChild(dragImage)
+    // Set invisible drag image
+    event.dataTransfer.setDragImage(dragImage, 0, 0)
 
-      // Center the drag image on the cursor
-      event.dataTransfer.setDragImage(dragImage, gridSize.width / 2, gridSize.height / 2)
-
-      // Clean up after the drag starts
-      requestAnimationFrame(() => {
-        if (document.body.contains(dragImage)) {
-          document.body.removeChild(dragImage)
-        }
-      })
-    } else {
-      // Fallback: use the sidebar card as drag preview
-      const target = event.currentTarget as HTMLElement
-      const rect = target.getBoundingClientRect()
-      event.dataTransfer.setDragImage(target, rect.width / 2, rect.height / 2)
-    }
+    // Clean up after the drag starts
+    requestAnimationFrame(() => {
+      if (document.body.contains(dragImage)) {
+        document.body.removeChild(dragImage)
+      }
+    })
 
     onComponentDragStart?.(componentId)
   }
