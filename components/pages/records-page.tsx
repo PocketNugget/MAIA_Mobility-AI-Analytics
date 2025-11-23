@@ -169,7 +169,7 @@ export function RecordsPage() {
       `}</style>
 
       {/* Header Section */}
-      <div className="flex-shrink-0 relative z-20 bg-gradient-to-r from-white/90 via-red-50/90 to-white/90 backdrop-blur-xl border-b border-red-200/40 shadow-lg shadow-red-500/5">
+      <div className="flex-shrink-0 relative z-20 bg-gradient-to-r from-white/90 via-red-50/90 to-white/90 backdrop-blur-xl shadow-lg shadow-red-500/5">
         <div className="px-8 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4 flex-wrap">
@@ -191,22 +191,24 @@ export function RecordsPage() {
               </p>
             </div>
           </div>
-
-          <RecordsFilters
-            onFiltersChange={setUnifiedFilters}
-            onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
-            isActionMenuCollapsed={isActionMenuCollapsed}
-            availableOptions={availableOptions}
-            visualizationMode={visualizationMode}
-            onVisualizationModeChange={setVisualizationMode}
-            graphicType={graphicType}
-            onGraphicTypeChange={setGraphicType}
-            groupBy={groupBy}
-            onGroupByChange={setGroupBy}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            externalFilters={unifiedFilters}
-          />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-red-200 to-transparent" />
+          <div className="mt-4">
+            <RecordsFilters
+              onFiltersChange={setUnifiedFilters}
+              onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
+              isActionMenuCollapsed={isActionMenuCollapsed}
+              availableOptions={availableOptions}
+              visualizationMode={visualizationMode}
+              onVisualizationModeChange={setVisualizationMode}
+              graphicType={graphicType}
+              onGraphicTypeChange={setGraphicType}
+              groupBy={groupBy}
+              onGroupByChange={setGroupBy}
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              externalFilters={unifiedFilters}
+            />
+          </div>
         </div>
       </div>
 
