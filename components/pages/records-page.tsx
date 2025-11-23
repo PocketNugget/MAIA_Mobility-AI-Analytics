@@ -194,26 +194,25 @@ export function RecordsPage() {
         </div>
       </div>
 
-      <div >
-      {/* Main Content Area */}
-                <RecordsFilters
-            onFiltersChange={setUnifiedFilters}
-            onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
-            isActionMenuCollapsed={isActionMenuCollapsed}
-            availableOptions={availableOptions}
-            visualizationMode={visualizationMode}
-            onVisualizationModeChange={setVisualizationMode}
-            graphicType={graphicType}
-            onGraphicTypeChange={setGraphicType}
-            groupBy={groupBy}
-            onGroupByChange={setGroupBy}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            externalFilters={unifiedFilters}
-          />
+      <div className="px-4 pt-5 pb-3 ">
+        <RecordsFilters
+          onFiltersChange={setUnifiedFilters}
+          onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
+          isActionMenuCollapsed={isActionMenuCollapsed}
+          availableOptions={availableOptions}
+          visualizationMode={visualizationMode}
+          onVisualizationModeChange={setVisualizationMode}
+          graphicType={graphicType}
+          onGraphicTypeChange={setGraphicType}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          externalFilters={unifiedFilters}
+        />
       </div>
 
-      <div className="flex-1 flex overflow-hidden relative z-10 min-h-0">
+      <div className="flex-1 flex overflow-hidden relative z-10 min-h-0 px-4 pb-4">
         <RecordsFilterPanel
           onFiltersChange={setUnifiedFilters}
           isCollapsed={isActionMenuCollapsed}
@@ -221,10 +220,8 @@ export function RecordsPage() {
           loading={loading}
           selectedFilters={unifiedFilters}
         />
-        <div className="flex-1 overflow-hidden px-8 py-6 min-w-0">
-          <div className="h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/95 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] transition-all duration-200" style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95))'
-          }}>
+        <div className="flex-1 overflow-hidden px-3 py-4 min-w-0">
+          <div>
             {visualizationMode === 'records' ? (
               <RecordsTable
                 filters={actualFilters}
