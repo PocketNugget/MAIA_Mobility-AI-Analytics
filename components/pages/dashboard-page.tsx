@@ -94,13 +94,13 @@ export function DashboardPage() {
 
   const getComponentGridDefaults = (componentType: string) => {
     if (componentType === "metric") {
-      return { w: 3, h: 2, minW: 2, minH: 2 }
+      return { w: 2, h: 2, minW: 2, minH: 2 }
     }
     if (componentType === "patterns") {
-      return { w: 12, h: 4, minW: 6, minH: 3 }
+      return { w: 6, h: 3, minW: 6, minH: 3 }
     }
     if (componentType) {
-      return { w: 6, h: 4, minW: 4, minH: 3 }
+      return { w: 4, h: 3, minW: 4, minH: 3 }
     }
     return { w: 4, h: 3, minW: 2, minH: 2 }
   }
