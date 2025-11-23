@@ -12,10 +12,13 @@ import { PieChartComponent } from "@/components/dashboard/charts/pie-chart"
 import { AreaChartComponent } from "@/components/dashboard/charts/area-chart"
 import { RadarChartComponent } from "@/components/dashboard/charts/radar-chart"
 import { DraggableItem } from "@/components/dashboard/draggable-item"
-import { TrendingUp, AlertTriangle, Activity, Zap } from "lucide-react"
+import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import type { DisplayPattern } from "@/lib/types"
 
 export function DashboardPage() {
+  const [isEditMode, setIsEditMode] = useState(false)
+
   const externalPatterns: DisplayPattern[] = [
     {
       id: "1",
@@ -130,16 +133,40 @@ export function DashboardPage() {
 
   return (
     <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Real-time mobility insights and alerts</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Real-time mobility insights and alerts</p>
+        </div>
+        <Button
+          onClick={() => setIsEditMode(!isEditMode)}
+          variant={isEditMode ? "default" : "outline"}
+          size="default"
+          className={`flex items-center gap-2 transition-all ${
+            isEditMode
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "hover:bg-gray-100"
+          }`}
+        >
+          {isEditMode ? (
+            <>
+              <Eye className="w-4 h-4" />
+              View Only
+            </>
+          ) : (
+            <>
+              <Edit3 className="w-4 h-4" />
+              Edit Layout
+            </>
+          )}
+        </Button>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-8 pl-8">
+          <div className={`space-y-8 ${isEditMode ? 'pl-8' : ''}`}>
             {sections.map((section) => (
-              <DraggableItem key={section.id} id={section.id}>
+              <DraggableItem key={section.id} id={section.id} isEditMode={isEditMode}>
                 {renderSection(section)}
               </DraggableItem>
             ))}
