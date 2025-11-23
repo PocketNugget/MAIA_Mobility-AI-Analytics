@@ -75,3 +75,75 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const body = await request.json();
+    
+    const { 
+      title, 
+      description, 
+      filters, 
+      priority, 
+      frequency, 
+      time_range_start, 
+      time_range_end, 
+      incident_ids 
+    } = body;
+    
+    // Validate required fields
+    if (!title || !description) {
+      return NextResponse.json(
+        { success: false, error: 'Title and description are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Insert pattern
+    const { data: pattern, error: insertError } = await supabase
+      .from('patterns')
+      .insert({
+        title,
+        description,
+        filters: filters || {},
+        priority: priority || 0,
+        frequency: frequency || 0,
+        time_range_start,
+        time_range_end,
+        incident_ids: incident_ids || [],
+      })
+      .select()
+      .single();
+    
+    if (insertError) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to save pattern', details: insertError.message },
+        { status: 500 }
+      );
+    }
+    
+    // Create incident-pattern relationships if incident_ids provided
+    if (incident_ids && incident_ids.length > 0 && pattern) {
+      const relationships = incident_ids.map((incidentId: string) => ({
+        incident_id: incidentId,
+        pattern_id: pattern.id,
+        similarity_score: 1.0,
+      }));
+      
+      await supabase.from('incident_patterns').insert(relationships);
+    }
+    
+    return NextResponse.json({
+      success: true,
+      pattern,
+    });
+    
+  } catch (error: any) {
+    console.error('Error saving pattern:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error', details: error.message },
+      { status: 500 }
+    );
+  }
+}

@@ -9,9 +9,10 @@ export async function POST(request: NextRequest) {
     
     // Parse request body
     const body = await request.json();
-    const { incident_ids, options } = body as {
+    const { incident_ids, options, preview } = body as {
       incident_ids?: string[];
       options?: ClusteringOptions;
+      preview?: boolean;
     };
     
     // Fetch incidents from database
@@ -54,6 +55,23 @@ export async function POST(request: NextRequest) {
     
     // Run clustering algorithm
     const patterns = clusterIncidents(mappedIncidents, options);
+    
+    // If preview mode, just return the patterns without saving
+    if (preview) {
+      return NextResponse.json({
+        success: true,
+        patterns_created: patterns.length,
+        patterns: patterns.map(p => ({
+          title: p.title,
+          description: p.description,
+          filters: p.filters,
+          priority: p.priority,
+          frequency: p.frequency,
+          time_range: p.timeRange,
+          incident_ids: p.incidentIds,
+        })),
+      });
+    }
     
     // Save patterns to database
     const savedPatterns: any[] = [];
