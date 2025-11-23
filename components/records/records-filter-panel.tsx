@@ -186,7 +186,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
     return Object.values(selectedFilters).reduce((sum, values) => sum + values.length, 0)
   }
 
-  const checkboxBlue = "border-slate-300 data-[state=checked]:bg-blue-800 data-[state=checked]:border-blue-800"
+  const checkboxRed = "border-slate-300 data-[state=checked]:bg-red-400 data-[state=checked]:border-red-400"
 
   if (loading) {
     return (
@@ -209,7 +209,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
             {getActiveFilterCount() > 0 && (
               <button
                 onClick={clearAllFilters}
-                className="text-xs text-blue-800 hover:text-blue-900 font-medium"
+                className="text-xs text-red-600 hover:text-red-700 font-medium"
               >
                 Clear all
               </button>
@@ -254,9 +254,9 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                             setSelectedFilters(rest)
                           }
                         }}
-                        className={checkboxBlue}
+                        className={checkboxRed}
                       />
-                      <span className="text-xs text-blue-800 font-semibold flex-1 group-hover:text-blue-900">
+                      <span className="text-xs text-red-600 font-semibold flex-1 group-hover:text-red-700">
                         Select all
                       </span>
                     </label>
@@ -272,7 +272,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                             <Checkbox
                               checked={isFilterSelected(facet.field, actualValue)}
                               onCheckedChange={() => toggleFilter(facet.field, actualValue)}
-                              className={checkboxBlue}
+                              className={checkboxRed}
                             />
                             <span className="text-xs text-slate-600 flex-1 group-hover:text-slate-900 truncate" title={option.value}>
                               {option.value}
@@ -281,7 +281,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => selectOnly(facet.field, actualValue)}
-                              className="text-[10px] text-blue-800 hover:text-blue-900 font-medium opacity-0 group-hover:opacity-100 transition-opacity px-1"
+                              className="text-[10px] text-red-600 hover:text-red-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity px-1"
                             >
                               only
                             </button>
