@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { TrendingUp, AlertTriangle, Activity, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { TrendingUp, AlertTriangle, Activity, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ComponentPreview } from "./component-preview"
 
@@ -120,18 +120,6 @@ export function ComponentsSidebar({
           </div>
         )}
       </div>
-
-      {/* Toggle Button for Collapsed Sidebar */}
-      {!isOpen && (
-        <Button
-          onClick={() => onToggle(true)}
-          variant="default"
-          size="sm"
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 shadow-lg"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-      )}
     </>
   )
 }

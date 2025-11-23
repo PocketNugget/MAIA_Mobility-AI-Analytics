@@ -10,7 +10,7 @@ import { BarChartComponent } from "@/components/dashboard/charts/bar-chart"
 import { PieChartComponent } from "@/components/dashboard/charts/pie-chart"
 import { AreaChartComponent } from "@/components/dashboard/charts/area-chart"
 import { RadarChartComponent } from "@/components/dashboard/charts/radar-chart"
-import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye } from "lucide-react"
+import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ComponentsSidebar } from "@/components/dashboard/components-sidebar"
 import type { DisplayPattern } from "@/lib/types"
@@ -332,28 +332,50 @@ export function DashboardPage() {
               }
             </p>
           </div>
-          <Button
-            onClick={() => setIsEditMode(!isEditMode)}
-            variant={isEditMode ? "default" : "outline"}
-            size="default"
-            className={`flex items-center gap-2 transition-all ${
-              isEditMode
-                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            {isEditMode ? (
-              <>
-                <Eye className="w-4 h-4" />
-                View Only
-              </>
-            ) : (
-              <>
-                <Edit3 className="w-4 h-4" />
-                Edit Layout
-              </>
+          <div className="flex flex-col items-end gap-2">
+            <Button
+              onClick={() => {
+                setIsEditMode((prev) => {
+                  const next = !prev
+                  if (!next) setIsSidebarOpen(false)
+                  return next
+                })
+              }}
+              variant={isEditMode ? "default" : "outline"}
+              size="default"
+              className={`flex items-center gap-2 transition-all ${
+                isEditMode
+                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {isEditMode ? (
+                <>
+                  <Eye className="w-4 h-4" />
+                  View Only
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-4 h-4" />
+                  Edit Layout
+                </>
+              )}
+            </Button>
+            {isEditMode && (
+              <Button
+                onClick={() => {
+                  setIsEditMode(true)
+                  setIsSidebarOpen(true)
+                }}
+                variant="default"
+                size="default"
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+              >
+                <Plus className="w-4 h-4" />
+                Add Component
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
 
       {isEditMode && (
