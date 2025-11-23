@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { TrendingUp, AlertTriangle, Activity, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ComponentPreview } from "./component-preview"
@@ -8,6 +9,8 @@ interface ComponentsSidebarProps {
   isOpen: boolean
   onToggle: (open: boolean) => void
   onAddComponent: (componentType: string) => void
+  onComponentDragStart?: (componentType: string) => void
+  onComponentDragEnd?: () => void
 }
 
 const availableComponents = [
@@ -21,7 +24,30 @@ const availableComponents = [
   { id: 'patterns', name: 'Patterns Table', icon: Activity, description: 'Pattern analysis' },
 ]
 
-export function ComponentsSidebar({ isOpen, onToggle, onAddComponent }: ComponentsSidebarProps) {
+const DATA_TRANSFER_TYPE = "application/zepedapp-component"
+
+export function ComponentsSidebar({
+  isOpen,
+  onToggle,
+  onAddComponent,
+  onComponentDragStart,
+  onComponentDragEnd,
+}: ComponentsSidebarProps) {
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, componentId: string) => {
+    event.dataTransfer.setData(DATA_TRANSFER_TYPE, componentId)
+    event.dataTransfer.setData("text/plain", componentId)
+    event.dataTransfer.effectAllowed = "copy"
+    const target = event.currentTarget
+    const rect = target.getBoundingClientRect()
+    // Center the drag image under the cursor for better placement alignment
+    event.dataTransfer.setDragImage(target, rect.width / 2, rect.height / 2)
+    onComponentDragStart?.(componentId)
+  }
+
+  const handleDragEnd = () => {
+    onComponentDragEnd?.()
+  }
+
   return (
     <>
       <div
@@ -48,6 +74,9 @@ export function ComponentsSidebar({ isOpen, onToggle, onAddComponent }: Componen
                   key={component.id}
                   className="bg-card border-2 border-border rounded-lg hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group overflow-hidden"
                   onClick={() => onAddComponent(component.id)}
+                  draggable
+                  onDragStart={(event) => handleDragStart(event, component.id)}
+                  onDragEnd={handleDragEnd}
                 >
                   {/* Preview Section */}
                   <div className="h-32 bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center justify-center relative overflow-hidden">

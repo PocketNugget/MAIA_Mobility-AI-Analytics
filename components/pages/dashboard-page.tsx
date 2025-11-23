@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type DragEvent } from "react"
 import GridLayout, { Layout } from "react-grid-layout"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { AlertsPanel } from "@/components/dashboard/alerts-panel"
@@ -10,16 +10,36 @@ import { BarChartComponent } from "@/components/dashboard/charts/bar-chart"
 import { PieChartComponent } from "@/components/dashboard/charts/pie-chart"
 import { AreaChartComponent } from "@/components/dashboard/charts/area-chart"
 import { RadarChartComponent } from "@/components/dashboard/charts/radar-chart"
-import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ComponentPreview } from "@/components/dashboard/component-preview"
+import { ComponentsSidebar } from "@/components/dashboard/components-sidebar"
 import type { DisplayPattern } from "@/lib/types"
+
+const INITIAL_GRID_ITEMS = new Set([
+  "metric-1",
+  "metric-2",
+  "metric-3",
+  "metric-4",
+  "line-chart",
+  "alerts",
+  "bar-chart",
+  "pie-chart",
+  "area-chart",
+  "radar-chart",
+  "patterns",
+])
 
 export function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [containerWidth, setContainerWidth] = useState(1200)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [draggingComponentType, setDraggingComponentType] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const DATA_TRANSFER_TYPE = "application/zepedapp-component"
+  const GRID_COLS = 12
+  const GRID_MARGIN: [number, number] = [20, 24]
+  const GRID_ROW_HEIGHT = 70
+  const GRID_CONTAINER_PADDING: [number, number] = [0, 0]
 
   useEffect(() => {
     const updateWidth = () => {
@@ -72,6 +92,19 @@ export function DashboardPage() {
     },
   ]
 
+  const getComponentGridDefaults = (componentType: string) => {
+    if (componentType === "metric") {
+      return { w: 3, h: 2, minW: 2, minH: 2 }
+    }
+    if (componentType === "patterns") {
+      return { w: 12, h: 4, minW: 6, minH: 3 }
+    }
+    if (componentType) {
+      return { w: 6, h: 4, minW: 4, minH: 3 }
+    }
+    return { w: 4, h: 3, minW: 2, minH: 2 }
+  }
+
   const [layout, setLayout] = useState<Layout[]>([
     // Metrics row
     { i: "metric-1", x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
@@ -90,131 +123,176 @@ export function DashboardPage() {
   ])
 
   const onLayoutChange = (newLayout: Layout[]) => {
-    setLayout(newLayout)
+    setLayout(
+      newLayout.filter((item) => item.i !== "__dropping-elem__" && item.i !== "__dropping-elem__custom__")
+    )
+  }
+
+  const getComponentTypeFromKey = (key: string) => {
+    if (key.startsWith("metric")) return "metric"
+    if (key.startsWith("line-chart")) return "line-chart"
+    if (key.startsWith("bar-chart")) return "bar-chart"
+    if (key.startsWith("pie-chart")) return "pie-chart"
+    if (key.startsWith("area-chart")) return "area-chart"
+    if (key.startsWith("radar-chart")) return "radar-chart"
+    if (key.startsWith("alerts")) return "alerts"
+    if (key.startsWith("patterns")) return "patterns"
+    return key
   }
 
   const renderGridItem = (key: string) => {
     const containerStyle = "h-full w-full overflow-hidden flex items-stretch"
     const metricContainerStyle = "h-full w-full flex flex-col"
+    const componentType = getComponentTypeFromKey(key)
 
-    switch (key) {
-      case "metric-1":
-        return (
-          <div className={metricContainerStyle}>
-            <div className="flex-1 w-full">
-              <MetricCard title="Active Records" value="2,847" icon={Activity} trend="+12.5%" trendPositive />
-            </div>
+    if (componentType === "metric") {
+      const metricContentMap: Record<string, { title: string; value: string; icon: any; trend?: string; trendPositive?: boolean }> = {
+        "metric-1": { title: "Active Records", value: "2,847", icon: Activity, trend: "+12.5%", trendPositive: true },
+        "metric-2": { title: "Processing Rate", value: "94.2%", icon: TrendingUp, trend: "+2.1%", trendPositive: true },
+        "metric-3": { title: "Alerts Today", value: "23", icon: AlertTriangle, trend: "+5", trendPositive: false },
+        "metric-4": { title: "API Calls", value: "45.2K", icon: Zap, trend: "+8.3%", trendPositive: true },
+      }
+      const metricConfig = metricContentMap[key] ?? { title: "Metric 1", value: "1,234", icon: Activity, trend: "+0%", trendPositive: true }
+      return (
+        <div className={metricContainerStyle}>
+          <div className="flex-1 w-full">
+            <MetricCard
+              title={metricConfig.title}
+              value={metricConfig.value}
+              icon={metricConfig.icon}
+              trend={metricConfig.trend}
+              trendPositive={metricConfig.trendPositive}
+            />
           </div>
-        )
-      case "metric-2":
-        return (
-          <div className={metricContainerStyle}>
-            <div className="flex-1 w-full">
-              <MetricCard title="Processing Rate" value="94.2%" icon={TrendingUp} trend="+2.1%" trendPositive />
-            </div>
-          </div>
-        )
-      case "metric-3":
-        return (
-          <div className={metricContainerStyle}>
-            <div className="flex-1 w-full">
-              <MetricCard title="Alerts Today" value="23" icon={AlertTriangle} trend="+5" trendPositive={false} />
-            </div>
-          </div>
-        )
-      case "metric-4":
-        return (
-          <div className={metricContainerStyle}>
-            <div className="flex-1 w-full">
-              <MetricCard title="API Calls" value="45.2K" icon={Zap} trend="+8.3%" trendPositive />
-            </div>
-          </div>
-        )
-      case "line-chart":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <LineChartComponent />
-            </div>
-          </div>
-        )
-      case "alerts":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <AlertsPanel />
-            </div>
-          </div>
-        )
-      case "bar-chart":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <BarChartComponent />
-            </div>
-          </div>
-        )
-      case "pie-chart":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <PieChartComponent />
-            </div>
-          </div>
-        )
-      case "area-chart":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <AreaChartComponent />
-            </div>
-          </div>
-        )
-      case "radar-chart":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <RadarChartComponent />
-            </div>
-          </div>
-        )
-      case "patterns":
-        return (
-          <div className={containerStyle} style={{ minHeight: '200px' }}>
-            <div style={{ width: '100%', height: '100%' }}>
-              <PatternsTable title="Top External Patterns (Twitter)" patterns={externalPatterns} type="external" />
-            </div>
-          </div>
-        )
-      default:
-        return null
+        </div>
+      )
     }
+
+    if (componentType === "line-chart") {
+      const useSample = !INITIAL_GRID_ITEMS.has(key)
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <LineChartComponent variant={useSample ? "sample" : "default"} />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "alerts") {
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <AlertsPanel />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "bar-chart") {
+      const useSample = !INITIAL_GRID_ITEMS.has(key)
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <BarChartComponent variant={useSample ? "sample" : "default"} />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "pie-chart") {
+      const useSample = !INITIAL_GRID_ITEMS.has(key)
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <PieChartComponent variant={useSample ? "sample" : "default"} />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "area-chart") {
+      const useSample = !INITIAL_GRID_ITEMS.has(key)
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <AreaChartComponent variant={useSample ? "sample" : "default"} />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "radar-chart") {
+      const useSample = !INITIAL_GRID_ITEMS.has(key)
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <RadarChartComponent variant={useSample ? "sample" : "default"} />
+          </div>
+        </div>
+      )
+    }
+
+    if (componentType === "patterns") {
+      return (
+        <div className={containerStyle} style={{ minHeight: '200px' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <PatternsTable title="Top External Patterns (Twitter)" patterns={externalPatterns} type="external" />
+          </div>
+        </div>
+      )
+    }
+
+    return null
   }
 
-  const availableComponents = [
-    { id: 'metric', name: 'Metric Card', icon: Activity, description: 'Display key metrics' },
-    { id: 'line-chart', name: 'Line Chart', icon: TrendingUp, description: 'Time series data' },
-    { id: 'bar-chart', name: 'Bar Chart', icon: Activity, description: 'Compare values' },
-    { id: 'pie-chart', name: 'Pie Chart', icon: Activity, description: 'Show proportions' },
-    { id: 'area-chart', name: 'Area Chart', icon: TrendingUp, description: 'Stacked trends' },
-    { id: 'radar-chart', name: 'Radar Chart', icon: Activity, description: 'Multi-variable data' },
-    { id: 'alerts', name: 'Alerts Panel', icon: AlertTriangle, description: 'Recent alerts' },
-    { id: 'patterns', name: 'Patterns Table', icon: Activity, description: 'Pattern analysis' },
-  ]
-
-  const addComponent = (componentType: string) => {
+  const addComponent = (componentType: string, position?: { x: number; y: number }) => {
     const newId = `${componentType}-${Date.now()}`
+    const defaults = getComponentGridDefaults(componentType)
     const newLayout: Layout = {
       i: newId,
-      x: 0,
-      y: Infinity, // Add to bottom
-      w: componentType === 'metric' ? 3 : componentType === 'patterns' ? 12 : 6,
-      h: componentType === 'metric' ? 2 : 4,
-      minW: componentType === 'metric' ? 2 : 4,
-      minH: componentType === 'metric' ? 2 : 3,
+      x: position?.x ?? 0,
+      y: position?.y ?? Infinity, // Add to bottom when no drop position
+      ...defaults,
     }
-    setLayout([...layout, newLayout])
+    setLayout((prev) => [...prev, newLayout])
   }
+
+  const handleComponentDragStart = (componentType: string) => {
+    setDraggingComponentType(componentType)
+  }
+
+  const handleComponentDragEnd = () => {
+    setDraggingComponentType(null)
+  }
+
+  const handleDrop = (_layout: Layout[], layoutItem: Layout, event: DragEvent) => {
+    const componentType = event.dataTransfer?.getData(DATA_TRANSFER_TYPE) || draggingComponentType
+    if (!componentType) return
+    const defaults = getComponentGridDefaults(componentType)
+    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+    // Start from the drop cell and offset so the cursor is near the center of the new item
+    const centeredX = clamp(layoutItem.x - Math.floor(defaults.w / 2), 0, GRID_COLS - defaults.w)
+    const centeredY = Math.max(layoutItem.y - Math.floor(defaults.h / 2), 0)
+
+    addComponent(componentType, { x: centeredX, y: centeredY })
+    setDraggingComponentType(null)
+  }
+
+  const handleDropDragOver = (event: DragEvent) => {
+    event.preventDefault()
+    const componentType = event.dataTransfer?.getData(DATA_TRANSFER_TYPE) || draggingComponentType || ""
+    if (!draggingComponentType && componentType) {
+      setDraggingComponentType(componentType)
+    }
+    const defaults = getComponentGridDefaults(componentType)
+    return { w: defaults.w, h: defaults.h }
+  }
+
+  const dropPlaceholder = draggingComponentType
+    ? { i: "__dropping-elem__custom__", ...getComponentGridDefaults(draggingComponentType) }
+    : undefined
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -398,10 +476,15 @@ export function DashboardPage() {
           layout={layout}
           cols={12}
           rowHeight={70}
+          containerPadding={GRID_CONTAINER_PADDING}
           width={containerWidth}
           onLayoutChange={onLayoutChange}
           isDraggable={isEditMode}
           isResizable={isEditMode}
+          isDroppable={isEditMode}
+          onDrop={handleDrop}
+          onDropDragOver={handleDropDragOver}
+          droppingItem={dropPlaceholder}
           compactType="vertical"
           preventCollision={false}
           margin={[20, 24]}
@@ -430,71 +513,14 @@ export function DashboardPage() {
       </div>
       </div>
 
-      {/* Collapsible Sidebar - Only visible in edit mode */}
       {isEditMode && (
-        <>
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              isSidebarOpen ? 'w-80' : 'w-0'
-            } bg-muted border-l border-border overflow-hidden`}
-          >
-            {isSidebarOpen && (
-              <div className="h-full flex flex-col p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-foreground">Components</h2>
-                  <Button
-                    onClick={() => setIsSidebarOpen(false)}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="flex-1 overflow-auto space-y-4">
-                  {availableComponents.map((component) => (
-                    <div
-                      key={component.id}
-                      className="bg-card border-2 border-border rounded-lg hover:border-blue-400 hover:shadow-lg transition-all cursor-pointer group overflow-hidden"
-                      onClick={() => addComponent(component.id)}
-                    >
-                      {/* Preview Section */}
-                      <div className="h-32 bg-gradient-to-br from-slate-50 to-slate-100 p-4 flex items-center justify-center relative overflow-hidden">
-                        <ComponentPreview componentId={component.id} />
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Plus className="w-8 h-8 text-blue-600" />
-                        </div>
-                      </div>
-
-                      {/* Info Section */}
-                      <div className="p-3 border-t border-border">
-                        <h3 className="text-sm font-semibold text-foreground mb-1">
-                          {component.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {component.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Toggle Button for Collapsed Sidebar */}
-          {!isSidebarOpen && (
-            <Button
-              onClick={() => setIsSidebarOpen(true)}
-              variant="default"
-              size="sm"
-              className="fixed right-4 top-1/2 -translate-y-1/2 z-50 shadow-lg"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          )}
-        </>
+        <ComponentsSidebar
+          isOpen={isSidebarOpen}
+          onToggle={setIsSidebarOpen}
+          onAddComponent={(componentType) => addComponent(componentType)}
+          onComponentDragStart={handleComponentDragStart}
+          onComponentDragEnd={handleComponentDragEnd}
+        />
       )}
     </div>
   )
