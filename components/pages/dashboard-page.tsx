@@ -10,13 +10,14 @@ import { BarChartComponent } from "@/components/dashboard/charts/bar-chart"
 import { PieChartComponent } from "@/components/dashboard/charts/pie-chart"
 import { AreaChartComponent } from "@/components/dashboard/charts/area-chart"
 import { RadarChartComponent } from "@/components/dashboard/charts/radar-chart"
-import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye } from "lucide-react"
+import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { DisplayPattern } from "@/lib/types"
 
 export function DashboardPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [containerWidth, setContainerWidth] = useState(1200)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -189,41 +190,67 @@ export function DashboardPage() {
     }
   }
 
+  const availableComponents = [
+    { id: 'metric', name: 'Metric Card', icon: Activity, description: 'Display key metrics' },
+    { id: 'line-chart', name: 'Line Chart', icon: TrendingUp, description: 'Time series data' },
+    { id: 'bar-chart', name: 'Bar Chart', icon: Activity, description: 'Compare values' },
+    { id: 'pie-chart', name: 'Pie Chart', icon: Activity, description: 'Show proportions' },
+    { id: 'area-chart', name: 'Area Chart', icon: TrendingUp, description: 'Stacked trends' },
+    { id: 'radar-chart', name: 'Radar Chart', icon: Activity, description: 'Multi-variable data' },
+    { id: 'alerts', name: 'Alerts Panel', icon: AlertTriangle, description: 'Recent alerts' },
+    { id: 'patterns', name: 'Patterns Table', icon: Activity, description: 'Pattern analysis' },
+  ]
+
+  const addComponent = (componentType: string) => {
+    const newId = `${componentType}-${Date.now()}`
+    const newLayout: Layout = {
+      i: newId,
+      x: 0,
+      y: Infinity, // Add to bottom
+      w: componentType === 'metric' ? 3 : componentType === 'patterns' ? 12 : 6,
+      h: componentType === 'metric' ? 2 : 4,
+      minW: componentType === 'metric' ? 2 : 4,
+      minH: componentType === 'metric' ? 2 : 3,
+    }
+    setLayout([...layout, newLayout])
+  }
+
   return (
-    <div className="p-8">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            {isEditMode
-              ? "Drag components to move, resize from edges and corners"
-              : "Real-time mobility insights and alerts"
-            }
-          </p>
+    <div className="flex h-screen overflow-hidden">
+      <div className="flex-1 p-8 overflow-auto">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">
+              {isEditMode
+                ? "Drag components to move, resize from edges and corners"
+                : "Real-time mobility insights and alerts"
+              }
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsEditMode(!isEditMode)}
+            variant={isEditMode ? "default" : "outline"}
+            size="default"
+            className={`flex items-center gap-2 transition-all ${
+              isEditMode
+                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                : "hover:bg-gray-100"
+            }`}
+          >
+            {isEditMode ? (
+              <>
+                <Eye className="w-4 h-4" />
+                View Only
+              </>
+            ) : (
+              <>
+                <Edit3 className="w-4 h-4" />
+                Edit Layout
+              </>
+            )}
+          </Button>
         </div>
-        <Button
-          onClick={() => setIsEditMode(!isEditMode)}
-          variant={isEditMode ? "default" : "outline"}
-          size="default"
-          className={`flex items-center gap-2 transition-all ${
-            isEditMode
-              ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-              : "hover:bg-gray-100"
-          }`}
-        >
-          {isEditMode ? (
-            <>
-              <Eye className="w-4 h-4" />
-              View Only
-            </>
-          ) : (
-            <>
-              <Edit3 className="w-4 h-4" />
-              Edit Layout
-            </>
-          )}
-        </Button>
-      </div>
 
       {isEditMode && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
@@ -400,6 +427,73 @@ export function DashboardPage() {
           ))}
         </GridLayout>
       </div>
+      </div>
+
+      {/* Collapsible Sidebar - Only visible in edit mode */}
+      {isEditMode && (
+        <>
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isSidebarOpen ? 'w-80' : 'w-0'
+            } bg-muted border-l border-border overflow-hidden`}
+          >
+            {isSidebarOpen && (
+              <div className="h-full flex flex-col p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-foreground">Components</h2>
+                  <Button
+                    onClick={() => setIsSidebarOpen(false)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div className="flex-1 overflow-auto space-y-3">
+                  {availableComponents.map((component) => (
+                    <div
+                      key={component.id}
+                      className="p-4 bg-card border border-border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => addComponent(component.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <component.icon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-foreground mb-1">
+                            {component.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {component.description}
+                          </p>
+                          <div className="flex items-center gap-1 mt-2">
+                            <Plus className="w-3 h-3 text-blue-600" />
+                            <span className="text-xs text-blue-600 font-medium">
+                              Click to add
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Toggle Button for Collapsed Sidebar */}
+          {!isSidebarOpen && (
+            <Button
+              onClick={() => setIsSidebarOpen(true)}
+              variant="default"
+              size="sm"
+              className="fixed right-4 top-1/2 -translate-y-1/2 z-50 shadow-lg"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+          )}
+        </>
+      )}
     </div>
   )
 }
