@@ -1,33 +1,98 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ArrowLeft, Loader2, Calendar, Tag, AlertCircle, FileText, Clock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Incident } from "@/lib/types"
 
 interface RecordDetailPageProps {
   recordId: string
 }
 
 export function RecordDetailPage({ recordId }: RecordDetailPageProps) {
-  // Mock data - will be replaced with API call to Supabase
-  const record = {
-    id: recordId,
-    source: "Twitter",
-    status: "Processed",
-    date: "2025-11-22 10:30",
-    score: 0.92,
-    content:
-      "Just launched our new mobility analytics platform! Excited to see real-time insights into transportation patterns. #AI #Analytics #Mobility",
-    author: "@mobility_tech",
-    engagement: {
-      likes: 1247,
-      retweets: 342,
-      replies: 89,
-    },
-    sentiment: "Positive",
-    keywords: ["mobility", "analytics", "AI", "transportation"],
-    processingTime: "2.3s",
+  const [record, setRecord] = useState<Incident | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRecord = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/records/${recordId}`)
+        const result = await response.json()
+
+        if (result.success) {
+          setRecord(result.data)
+        } else {
+          setError(result.error || "Failed to fetch record")
+        }
+      } catch (err) {
+        setError("Failed to fetch record")
+        console.error("Failed to fetch record:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecord()
+  }, [recordId])
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const getPriorityColor = (priority: number) => {
+    if (priority === 1) return "bg-blue-100 text-blue-700 border-blue-300"
+    if (priority === 2) return "bg-green-100 text-green-700 border-green-300"
+    if (priority === 3) return "bg-yellow-100 text-yellow-700 border-yellow-300"
+    if (priority === 4) return "bg-orange-100 text-orange-700 border-orange-300"
+    return "bg-red-100 text-red-700 border-red-300"
+  }
+
+  const getPriorityLabel = (priority: number) => {
+    if (priority === 1) return "Low"
+    if (priority === 2) return "Medium"
+    if (priority === 3) return "High"
+    if (priority === 4) return "Critical"
+    return "Urgent"
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 h-full flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-slate-600">Loading record details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !record) {
+    return (
+      <div className="p-8 h-full flex items-center justify-center">
+        <Card className="p-8 max-w-md text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Record Not Found</h2>
+          <p className="text-slate-600 mb-6">{error || "The record you're looking for doesn't exist."}</p>
+          <Link href="/records">
+            <Button className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Records
+            </Button>
+          </Link>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -35,109 +100,175 @@ export function RecordDetailPage({ recordId }: RecordDetailPageProps) {
       {/* Header with back button */}
       <div className="flex items-center gap-4">
         <Link href="/records">
-          <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+          <Button variant="outline" size="sm" className="gap-2 rounded-full shadow-md hover:shadow-lg transition-all">
             <ArrowLeft className="w-4 h-4" />
             Back to Records
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-foreground">Record Details</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Incident Details</h1>
+          <p className="text-sm text-slate-500 mt-1">Record ID: {record.id}</p>
+        </div>
       </div>
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Post content - primary section */}
+        {/* Primary content - left section */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Post card */}
-          <Card className="bg-card border-border p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">{record.author}</h2>
-                <p className="text-sm text-muted-foreground">{record.date}</p>
+          {/* Summary Card */}
+          <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="w-5 h-5 text-slate-600" />
+                  <h2 className="text-lg font-bold text-slate-900">Summary</h2>
+                </div>
+                <p className="text-slate-700 leading-relaxed">{record.summary}</p>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  record.status === "Processed"
-                    ? "bg-green-500/20 text-green-700"
-                    : record.status === "Processing"
-                      ? "bg-blue-500/20 text-blue-700"
-                      : "bg-red-500/20 text-red-700"
-                }`}
-              >
-                {record.status}
-              </span>
-            </div>
-
-            <div className="bg-secondary/30 rounded-lg p-4">
-              <p className="text-foreground leading-relaxed">{record.content}</p>
-            </div>
-
-            {/* Engagement metrics */}
-            <div className="flex gap-6 pt-4 border-t border-border">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Likes</p>
-                <p className="text-lg font-semibold text-foreground">{record.engagement.likes.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Retweets</p>
-                <p className="text-lg font-semibold text-foreground">{record.engagement.retweets.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Replies</p>
-                <p className="text-lg font-semibold text-foreground">{record.engagement.replies.toLocaleString()}</p>
-              </div>
+              <Badge className={`px-4 py-2 rounded-full text-sm font-bold border-2 ${getPriorityColor(record.priority)}`}>
+                P{record.priority} - {getPriorityLabel(record.priority)}
+              </Badge>
             </div>
           </Card>
 
-          {/* Keywords section */}
-          <Card className="bg-card border-border p-6 space-y-4">
-            <h3 className="font-semibold text-foreground">Extracted Keywords</h3>
-            <div className="flex flex-wrap gap-2">
-              {record.keywords.map((keyword) => (
-                <span
-                  key={keyword}
-                  className="px-3 py-1 bg-primary/10 text-primary border border-primary/30 rounded-full text-sm"
-                >
-                  {keyword}
-                </span>
-              ))}
+          {/* Original Content Card */}
+          <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-5 h-5 text-slate-600" />
+              <h3 className="font-bold text-slate-900">Original Content</h3>
+            </div>
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{record.original}</p>
             </div>
           </Card>
+
+          {/* Keywords Section */}
+          {(() => {
+            let parsedKeywords: string[] = []
+            
+            console.log('Raw keywords data:', record.keywords)
+            console.log('Keywords type:', typeof record.keywords)
+            console.log('Is array?', Array.isArray(record.keywords))
+            
+            if (record.keywords) {
+              try {
+                // If it's already an array of clean strings
+                if (Array.isArray(record.keywords)) {
+                  parsedKeywords = record.keywords.map((keyword: any) => {
+                    let cleanKeyword = String(keyword)
+                    // Remove all types of quotes and extra characters
+                    cleanKeyword = cleanKeyword.replace(/^[\["\s]+|[\]"\s]+$/g, '')
+                    cleanKeyword = cleanKeyword.replace(/["']/g, '')
+                    return cleanKeyword.trim()
+                  }).filter(Boolean)
+                } else {
+                  // Handle string format - could be JSON array or comma separated
+                  let keywordsStr = String(record.keywords).trim()
+                  
+                  // Remove outer brackets if present
+                  if (keywordsStr.startsWith('[') && keywordsStr.endsWith(']')) {
+                    keywordsStr = keywordsStr.slice(1, -1)
+                  }
+                  
+                  // Split by comma and clean each keyword
+                  parsedKeywords = keywordsStr.split(',').map((keyword: string) => {
+                    return keyword.replace(/["'\s\[\]]/g, '').trim()
+                  }).filter(Boolean)
+                }
+                
+                console.log('Parsed keywords:', parsedKeywords)
+              } catch (e) {
+                console.error('Error parsing keywords:', e)
+                parsedKeywords = []
+              }
+            }
+            
+            return parsedKeywords.length > 0 ? (
+              <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag className="w-5 h-5 text-slate-600" />
+                  <h3 className="font-bold text-slate-900">Keywords</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {parsedKeywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-2 border-blue-300 rounded-full text-sm font-semibold shadow-sm"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+            ) : null
+          })()}
+
+          {/* Sentiment Analysis */}
+          {record.sentiment_analysis && (
+            <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle className="w-5 h-5 text-slate-600" />
+                <h3 className="font-bold text-slate-900">Sentiment Analysis</h3>
+              </div>
+              <p className="text-slate-700">{record.sentiment_analysis}</p>
+            </Card>
+          )}
         </div>
 
-        {/* Metadata sidebar */}
+        {/* Metadata sidebar - right section */}
         <div className="space-y-4">
-          <Card className="bg-card border-border p-6 space-y-4">
-            <h3 className="font-semibold text-foreground">Record Metadata</h3>
+          <Card className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-slate-900 text-lg">Incident Information</h3>
 
-            <div className="space-y-4 divide-y divide-border">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Record ID</p>
-                <p className="text-sm font-mono text-foreground mt-1">{record.id}</p>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Source</p>
-                <p className="text-sm text-foreground mt-1">{record.source}</p>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Sentiment</p>
-                <p className="text-sm text-foreground mt-1">{record.sentiment}</p>
-              </div>
-
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Confidence Score</p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <p className="text-lg font-bold text-primary">{(record.score * 100).toFixed(0)}%</p>
-                  <div className="flex-1 bg-border rounded-full h-2">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${record.score * 100}%` }}></div>
-                  </div>
+            <div className="space-y-4">
+              <div className="pb-4 border-b border-slate-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-slate-500" />
+                  <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Incident Time</p>
                 </div>
+                <p className="text-sm text-slate-900 font-medium">{formatDate(record.time)}</p>
               </div>
 
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Processing Time</p>
-                <p className="text-sm text-foreground mt-1">{record.processingTime}</p>
+              <div className="pb-4 border-b border-slate-200">
+                <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Service</p>
+                <Badge className="bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 border-2 border-purple-300 rounded-full px-3 py-1">
+                  {record.service}
+                </Badge>
+              </div>
+
+              <div className="pb-4 border-b border-slate-200">
+                <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Source</p>
+                <Badge className="bg-gradient-to-br from-green-100 to-green-200 text-green-700 border-2 border-green-300 rounded-full px-3 py-1">
+                  {record.source}
+                </Badge>
+              </div>
+
+              <div className="pb-4 border-b border-slate-200">
+                <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Subservice</p>
+                <p className="text-sm text-slate-900 font-medium">{record.subservice}</p>
+              </div>
+
+              <div className="pb-4 border-b border-slate-200">
+                <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Category</p>
+                <Badge className="bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 border-2 border-amber-300 rounded-full px-3 py-1">
+                  {record.category}
+                </Badge>
+              </div>
+
+              <div className="pb-4 border-b border-slate-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Created</p>
+                </div>
+                <p className="text-xs text-slate-600">{formatDate(record.created_at)}</p>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Last Updated</p>
+                </div>
+                <p className="text-xs text-slate-600">{formatDate(record.updated_at)}</p>
               </div>
             </div>
           </Card>

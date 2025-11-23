@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     
     console.log('=== CLUSTERING REQUEST ===');
     console.log('Incident IDs count:', incident_ids?.length || 'all');
-    console.log('Filters:', filters);
+    console.log('Filters:', JSON.stringify(filters, null, 2));
     console.log('Date Range:', dateRange);
     console.log('Options received:', options ? JSON.stringify(options, null, 2) : 'undefined (will use defaults)');
     console.log('Preview mode:', preview);
@@ -31,52 +31,92 @@ export async function POST(request: NextRequest) {
     
     // Apply incident_ids filter if provided
     if (incident_ids && incident_ids.length > 0) {
+      console.log('📋 Filtering by specific incident IDs:', incident_ids.length);
       query = query.in('id', incident_ids);
     }
     
-    // Apply date range filter
+    // Apply date range filter - match records API date range options
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    
     if (dateRange) {
-      const now = new Date();
-      let startDate: Date;
-      
-      switch (dateRange) {
-        case 'Last 24 hours':
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case 'Last 7 days':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'Last 30 days':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        case 'Last 90 days':
-          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      // Check if it's a custom range (JSON format with start and end)
+      try {
+        const customRange = JSON.parse(dateRange);
+        if (customRange.start && customRange.end) {
+          startDate = new Date(customRange.start);
+          endDate = new Date(customRange.end);
+        }
+      } catch {
+        // Not JSON, handle as preset range
+        const now = new Date();
+        switch (dateRange) {
+          case 'Last 15 minutes':
+            startDate = new Date(now.getTime() - 15 * 60 * 1000);
+            break;
+          case 'Last hour':
+            startDate = new Date(now.getTime() - 60 * 60 * 1000);
+            break;
+          case 'Last 4 hours':
+            startDate = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+            break;
+          case 'Last 24 hours':
+            startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case 'Last 7 days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'Last 30 days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case 'Last 90 days':
+            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            // No date filter - fetch all incidents
+            console.log('⚠️  Unknown date range, fetching all incidents');
+        }
       }
-      
+    }
+    
+    if (startDate) {
+      console.log('📅 Date filter: incidents >= ', startDate.toISOString());
       query = query.gte('time', startDate.toISOString());
+    }
+    if (endDate) {
+      console.log('📅 Date filter: incidents <= ', endDate.toISOString());
+      query = query.lte('time', endDate.toISOString());
+    }
+    if (!startDate && !endDate) {
+      console.log('ℹ️  No date filter applied - fetching all incidents');
     }
     
     // Apply field filters (service, source, category, subservice, priority)
-    if (filters) {
+    if (filters && Object.keys(filters).length > 0) {
+      console.log('🔍 Applying field filters...');
       Object.entries(filters).forEach(([field, values]) => {
-        if (values && values.length > 0) {
-          // Handle priority field - remove 'P' prefix
+        if (values && Array.isArray(values) && values.length > 0) {
+          // Handle priority field - values might have 'P' prefix or be already numeric
           if (field === 'priority') {
-            const priorityValues = values.map(v => parseInt(v.replace('P', '')));
+            const priorityValues = values.map(v => {
+              const str = String(v);
+              return str.startsWith('P') ? parseInt(str.replace('P', '')) : parseInt(str);
+            });
+            console.log(`   - ${field}: ${JSON.stringify(priorityValues)}`);
             query = query.in(field, priorityValues);
           } else {
+            console.log(`   - ${field}: ${JSON.stringify(values)}`);
             query = query.in(field, values);
           }
         }
       });
+    } else {
+      console.log('ℹ️  No field filters applied - fetching all incidents within date range');
     }
     
     const { data: incidents, error: fetchError } = await query;
     
-    console.log('Fetched incidents:', incidents?.length || 0);
+    console.log('✅ Fetched incidents:', incidents?.length || 0);
     
     if (fetchError) {
       return NextResponse.json(
@@ -169,24 +209,35 @@ export async function POST(request: NextRequest) {
     
     // If preview mode, just return the patterns without saving
     if (preview) {
+      const sortedPatterns = patterns.sort((a, b) => b.frequency - a.frequency);
       return NextResponse.json({
         success: true,
-        patterns_created: patterns.length,
-        patterns: patterns.map(p => ({
+        patterns_created: sortedPatterns.length,
+        patterns: sortedPatterns.map(p => ({
           title: p.title,
           description: p.description,
           filters: p.filters,
           priority: p.priority,
           frequency: p.frequency,
-          time_range: {
-            start: p.timeRangeStart,
-            end: p.timeRangeEnd,
-          },
+          timeRangeStart: p.timeRangeStart,
+          timeRangeEnd: p.timeRangeEnd,
           incident_ids: p.incidentIds,
         })),
       });
     }
+
+    // Delete existing patterns from database (to avoid duplicates on regeneration)
+    console.log('🗑️  Deleting existing patterns from database...');
+    const { error: deleteError } = await supabase
+      .from('patterns')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all patterns
     
+    if (deleteError) {
+      console.error('Error deleting patterns:', deleteError);
+      // Continue anyway, as we can still insert new patterns
+    }
+
     // Save patterns to database
     const savedPatterns: any[] = [];
     
@@ -224,20 +275,14 @@ export async function POST(request: NextRequest) {
         await supabase.from('incident_patterns').insert(relationships);
       }
     }
+
+    // Sort patterns by frequency before returning
+    const sortedSavedPatterns = savedPatterns.sort((a, b) => b.frequency - a.frequency);
     
     return NextResponse.json({
       success: true,
-      patterns_created: savedPatterns.length,
-      patterns: savedPatterns.map(p => ({
-        id: p.id,
-        title: p.title,
-        priority: p.priority,
-        frequency: p.frequency,
-        time_range: {
-          start: p.timeRangeStart,
-          end: p.timeRangeEnd,
-        },
-      })),
+      patterns_created: sortedSavedPatterns.length,
+      patterns: sortedSavedPatterns,
     });
     
   } catch (error: any) {

@@ -13,7 +13,7 @@ import { RadarChartComponent } from "@/components/dashboard/charts/radar-chart"
 import { TrendingUp, AlertTriangle, Activity, Zap, Edit3, Eye, Plus, Trash2, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ComponentsSidebar } from "@/components/dashboard/components-sidebar"
-import type { DisplayPattern } from "@/lib/types"
+import type { Pattern } from "@/lib/types"
 
 const INITIAL_GRID_ITEMS = new Set([
   "metric-1",
@@ -54,7 +54,7 @@ export function DashboardPage() {
     return () => window.removeEventListener('resize', updateWidth)
   }, [])
 
-  const externalPatterns: DisplayPattern[] = [
+  const externalPatterns: Pattern[] = [
     {
       id: "1",
       title: "#mobility",
@@ -359,12 +359,12 @@ export function DashboardPage() {
       {/* Header Section - Full Width */}
       <div className="relative z-20 bg-gradient-to-r from-white/90 via-red-50/90 to-white/90 backdrop-blur-xl border-b border-red-200/40 shadow-lg shadow-red-500/5">
           <div className="px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-black bg-gradient-to-r from-red-600 via-rose-500 to-red-600 bg-clip-text text-transparent mb-2 animate-gradient bg-[length:200%_auto]">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl font-black bg-gradient-to-r from-red-600 via-rose-500 to-red-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
                   Dashboard
                 </h1>
-                <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                <p className="text-sm text-slate-600 flex items-center gap-2 font-medium mb-0">
                   {isEditMode ? (
                     <>
                       <span className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">

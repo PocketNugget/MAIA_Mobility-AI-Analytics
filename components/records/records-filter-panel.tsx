@@ -30,6 +30,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
   const [initialized, setInitialized] = useState(false)
   const isUpdatingFromExternal = useRef(false)
   const lastExternalFiltersRef = useRef<string>("")
+  const userMadeChanges = useRef(false)
 
   // Initialize all filters with all values when facets first load
   useEffect(() => {
@@ -47,7 +48,12 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
 
   // Sync with external filters when provided (convert from optimized format)
   useEffect(() => {
-    if (externalFilters && Object.keys(externalFilters).length > 0 && facets.length > 0) {
+    // Skip if external filters are empty - this means no filters are applied
+    if (!externalFilters || Object.keys(externalFilters).length === 0) {
+      return
+    }
+    
+    if (facets.length > 0) {
       // Check if external filters actually changed
       const externalFiltersStr = JSON.stringify(externalFilters)
       if (lastExternalFiltersRef.current === externalFiltersStr) {
@@ -83,7 +89,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
       isUpdatingFromExternal.current = true
       setSelectedFilters(reconstructedFilters)
     }
-  }, [externalFilters, facets])
+  }, [externalFilters])
 
   useEffect(() => {
     // Don't notify parent if we're updating from external filters
@@ -92,7 +98,8 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
       return
     }
     
-    if (initialized) {
+    // Only send filters if initialized AND user has made changes
+    if (initialized && userMadeChanges.current) {
       // Calculate optimized filters for search bar display
       const optimizedFilters: Record<string, string[]> = {}
       
@@ -123,7 +130,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
       
       onFiltersChange?.(optimizedFilters)
     }
-  }, [selectedFilters, onFiltersChange, initialized, facets])
+  }, [selectedFilters, onFiltersChange, initialized])
 
   const toggleFacet = (field: string) => {
     const newExpanded = new Set(expandedFacets)
@@ -136,6 +143,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
   }
 
   const toggleFilter = (field: string, value: string) => {
+    userMadeChanges.current = true
     const currentValues = selectedFilters[field] || []
     const newValues = currentValues.includes(value)
       ? currentValues.filter(v => v !== value)
@@ -150,10 +158,12 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
   }
 
   const selectAll = (field: string, values: string[]) => {
+    userMadeChanges.current = true
     setSelectedFilters({ ...selectedFilters, [field]: values })
   }
 
   const selectOnly = (field: string, value: string) => {
+    userMadeChanges.current = true
     setSelectedFilters({ ...selectedFilters, [field]: [value] })
   }
 
@@ -162,12 +172,21 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
   }
 
   const clearAllFilters = () => {
-    setSelectedFilters({})
+    userMadeChanges.current = true
+    const allSelected: Record<string, string[]> = {}
+    facets.forEach(facet => {
+      allSelected[facet.field] = facet.options.map(o => 
+        facet.field === "priority" ? o.value.replace("P", "") : o.value
+      )
+    })
+    setSelectedFilters(allSelected)
   }
 
   const getActiveFilterCount = () => {
     return Object.values(selectedFilters).reduce((sum, values) => sum + values.length, 0)
   }
+
+  const checkboxRed = "border-slate-300 data-[state=checked]:bg-red-400 data-[state=checked]:border-red-400"
 
   if (loading) {
     return (
@@ -190,7 +209,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
             {getActiveFilterCount() > 0 && (
               <button
                 onClick={clearAllFilters}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-red-600 hover:text-red-700 font-medium"
               >
                 Clear all
               </button>
@@ -235,9 +254,9 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                             setSelectedFilters(rest)
                           }
                         }}
-                        className="border-slate-300"
+                        className={checkboxRed}
                       />
-                      <span className="text-xs text-blue-600 font-semibold flex-1 group-hover:text-blue-700">
+                      <span className="text-xs text-red-600 font-semibold flex-1 group-hover:text-red-700">
                         Select all
                       </span>
                     </label>
@@ -249,25 +268,27 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                           key={option.value}
                           className="flex items-center gap-2 group hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors"
                         >
-                          <label className="flex items-center gap-2 cursor-pointer flex-1">
+                          <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
                             <Checkbox
                               checked={isFilterSelected(facet.field, actualValue)}
                               onCheckedChange={() => toggleFilter(facet.field, actualValue)}
-                              className="border-slate-300"
+                              className={checkboxRed}
                             />
-                            <span className="text-xs text-slate-600 flex-1 group-hover:text-slate-900">
+                            <span className="text-xs text-slate-600 flex-1 group-hover:text-slate-900 truncate" title={option.value}>
                               {option.value}
                             </span>
                           </label>
-                          <button
-                            onClick={() => selectOnly(facet.field, actualValue)}
-                            className="text-[10px] text-blue-600 hover:text-blue-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity px-1"
-                          >
-                            only
-                          </button>
-                          <span className="text-xs text-slate-400 font-mono">
-                            {option.count}
-                          </span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => selectOnly(facet.field, actualValue)}
+                              className="text-[10px] text-red-600 hover:text-red-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity px-1"
+                            >
+                              only
+                            </button>
+                            <span className="text-xs text-slate-400 font-mono">
+                              {option.count}
+                            </span>
+                          </div>
                         </div>
                       )
                     })}
