@@ -374,8 +374,8 @@ export function DashboardPage() {
           onLayoutChange={onLayoutChange}
           isDraggable={isEditMode}
           isResizable={isEditMode}
-          compactType={isEditMode ? null : "vertical"}
-          preventCollision={true}
+          compactType="vertical"
+          preventCollision={false}
           margin={[20, 24]}
           resizeHandles={['se', 'sw', 'ne', 'nw', 'e', 'w', 'n', 's']}
           autoSize={true}
