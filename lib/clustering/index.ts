@@ -196,9 +196,13 @@ export async function clusterIncidents(
   
   // Translate Spanish incidents to English if translation is available
   let translations: Map<string, { summary: string; keywords: string[] }> | undefined;
-  if (isTranslationAvailable() && fullOptions.cachedTranslations) {
-    console.log('🌐 Translating Spanish incidents to English...');
+  if (isTranslationAvailable()) {
+    console.log('🌐 Checking for Spanish incidents to translate...');
+    console.log(`📦 Cached translations available: ${fullOptions.cachedTranslations?.size || 0}`);
     translations = await translateIncidents(normalized, fullOptions.cachedTranslations);
+    
+    // Update the options with new translations for caching
+    fullOptions.cachedTranslations = translations;
     
     // Apply translations to normalized incidents
     if (translations.size > 0) {
@@ -226,7 +230,13 @@ export async function clusterIncidents(
       fullOptions.embeddingModel,
       fullOptions.cachedEmbeddings
     );
-    if (embeddings.size > 0) {
+    
+    // Update the options with new embeddings for caching
+    if (embeddings) {
+      fullOptions.cachedEmbeddings = embeddings;
+    }
+    
+    if (embeddings && embeddings.size > 0) {
       console.log(`✅ AI features ready for ${embeddings.size} incidents`);
     } else {
       console.log('⚠️  AI feature generation failed, falling back to rule-based');
