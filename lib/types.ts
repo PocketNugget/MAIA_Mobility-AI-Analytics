@@ -23,6 +23,9 @@ export interface Pattern {
   filters: Record<string, any>
   priority: number
   frequency: number
+  timeRangeEnd: string | null
+  timeRangeStart: string | null
+  incidentIds: string[]
   created_at: string
   updated_at: string
 }
