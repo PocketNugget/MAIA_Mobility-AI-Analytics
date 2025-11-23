@@ -9,9 +9,14 @@ export function InternalPatternsPage() {
 
   const [sortBy, setSortBy] = useState<"frequency" | "date">("frequency")
 
-  const sorted = [...internalPatterns].sort((a, b) =>
-    sortBy === "frequency" ? b.frequency - a.frequency : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-  )
+  // Sort patterns by frequency (descending) by default
+  const sorted = [...internalPatterns].sort((a, b) => {
+    if (sortBy === "frequency") {
+      return b.count - a.count; // Higher frequency first
+    } else {
+      return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime();
+    }
+  })
 
   return (
     <div className="min-h-screen overflow-hidden bg-gradient-to-br from-red-50/30 via-slate-50 to-rose-50/20 relative">

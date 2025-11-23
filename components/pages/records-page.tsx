@@ -50,10 +50,10 @@ export function RecordsPage() {
   const [facets, setFacets] = useState<FacetGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [visualizationMode, setVisualizationMode] = useState<'records' | 'patterns' | 'graphic'>('records')
-  const [graphicType, setGraphicType] = useState<'timeseries' | 'topN' | 'barChart' | 'pieChart'>('timeseries')
+  const [graphicType, setGraphicType] = useState<'timeseries' | 'topN' | 'barChart' | 'pieChart' | 'areaChart' | 'treemap' | 'lineChart'>('timeseries')
   const [groupBy, setGroupBy] = useState<string>('service')
   const [totalCount, setTotalCount] = useState<number>(0)
-  const [dateRange, setDateRange] = useState<string>("Last 7 days")
+  const [dateRange, setDateRange] = useState<string>("Last 2 years")
 
   // Convert optimized filters (with negations) to actual filter values for API
   const actualFilters = useMemo(() => {
@@ -194,7 +194,7 @@ export function RecordsPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-5 pb-4 ">
+      <div className="px-4 pt-5 pb-4 relative z-20">
         <RecordsFilters
           onFiltersChange={setUnifiedFilters}
           onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
@@ -233,7 +233,14 @@ export function RecordsPage() {
           ) : visualizationMode === 'patterns' ? (
             <RecordsPatterns filters={actualFilters} dateRange={dateRange} />
           ) : (
-            <RecordsGraphics filters={actualFilters} graphicType={graphicType} groupBy={groupBy} dateRange={dateRange} />
+            <RecordsGraphics 
+              filters={actualFilters} 
+              graphicType={graphicType} 
+              groupBy={groupBy} 
+              dateRange={dateRange} 
+              onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
+              isActionMenuCollapsed={isActionMenuCollapsed}
+            />
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Search, ChevronDown, Calendar as CalendarIcon } from "lucide-react"
+import { X, Search, ChevronDown, Calendar as CalendarIcon, Plus } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +30,8 @@ interface RecordsFiltersProps {
   }
   visualizationMode?: 'records' | 'patterns' | 'graphic'
   onVisualizationModeChange?: (mode: 'records' | 'patterns' | 'graphic') => void
-  graphicType?: 'timeseries' | 'topN' | 'barChart' | 'pieChart'
-  onGraphicTypeChange?: (type: 'timeseries' | 'topN' | 'barChart' | 'pieChart') => void
+  graphicType?: 'timeseries' | 'topN' | 'barChart' | 'pieChart' | 'areaChart' | 'treemap' | 'lineChart'
+  onGraphicTypeChange?: (type: 'timeseries' | 'topN' | 'barChart' | 'pieChart' | 'areaChart' | 'treemap' | 'lineChart') => void
   groupBy?: string
   onGroupByChange?: (groupBy: string) => void
   dateRange?: string
@@ -58,7 +58,7 @@ export function RecordsFilters({
   const [activeFilters, setActiveFilters] = useState<FilterValue[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [suggestions, setSuggestions] = useState<{ field: string; values: string[] }[]>([])
-  const [dateRange, setDateRange] = useState(externalDateRange || "Last 7 days")
+  const [dateRange, setDateRange] = useState(externalDateRange || "Last 2 years")
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showCustomPicker, setShowCustomPicker] = useState(false)
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>(undefined)
@@ -112,6 +112,13 @@ export function RecordsFilters({
     }
   }, [externalDateRange])
 
+  // Initialize default date range on mount
+  useEffect(() => {
+    if (!externalDateRange && onDateRangeChange) {
+      onDateRangeChange("Last 2 years")
+    }
+  }, [externalDateRange, onDateRangeChange])
+
   useEffect(() => {
     // Don't notify parent if we're updating from external filters
     if (isUpdatingFromExternal.current) {
@@ -131,11 +138,9 @@ export function RecordsFilters({
   }, [activeFilters, onFiltersChange])
 
   useEffect(() => {
-    if (searchQuery.length > 0) {
-      generateSuggestions(searchQuery)
+    generateSuggestions(searchQuery)
+    if (searchQuery.length > 0 || suggestions.length > 0) {
       setShowSuggestions(true)
-    } else {
-      setShowSuggestions(false)
     }
   }, [searchQuery])
 
@@ -143,25 +148,60 @@ export function RecordsFilters({
     const lowerQuery = query.toLowerCase()
     const newSuggestions: { field: string; values: string[] }[] = []
 
-    // Check if query starts with a field name
-    const fieldMatch = query.match(/^(service|source|category|subservice|priority):(.*)/)
+    // If query is empty, show all available options
+    if (query.length === 0) {
+      Object.entries(availableOptions).forEach(([key, values]) => {
+        const field = key.slice(0, -1) // Remove 's' from end
+        if (values.length > 0) {
+          newSuggestions.push({ field, values: values.slice(0, 5) })
+        }
+      })
+      newSuggestions.push({ field: "priority", values: ["1", "2", "3", "4", "5"] })
+      setSuggestions(newSuggestions)
+      return
+    }
+
+    // Check if query starts with a field name (including partial matches with or without colon)
+    const fieldMatch = query.match(/^(service|source|category|subservice|priority|serv|sour|categ|cat|subserv|subsv|prio|pri):?(.*)/)
     
     if (fieldMatch) {
-      const [, field, value] = fieldMatch
+      const [, fieldPrefix, value] = fieldMatch
       const lowerValue = value.toLowerCase()
+      const hasColon = query.includes(':')
       
-      if (field === "priority") {
-        const priorities = ["1", "2", "3", "4", "5"].filter(p => p.includes(lowerValue))
-        if (priorities.length > 0) {
-          newSuggestions.push({ field: "priority", values: priorities })
+      // Map partial field names to full names
+      let field = fieldPrefix
+      if (fieldPrefix.startsWith('serv') && fieldPrefix !== 'service') field = 'service'
+      else if (fieldPrefix.startsWith('sour')) field = 'source'
+      else if (fieldPrefix.startsWith('cat') || fieldPrefix.startsWith('categ')) field = 'category'
+      else if (fieldPrefix.startsWith('subsv') || fieldPrefix.startsWith('subserv')) field = 'subservice'
+      else if (fieldPrefix.startsWith('pri')) field = 'priority'
+      
+      // If no colon yet or field name is still being typed, show all values for matched field
+      if (!hasColon || value.length === 0) {
+        if (field === "priority") {
+          newSuggestions.push({ field: "priority", values: ["1", "2", "3", "4", "5"] })
+        } else {
+          const optionKey = `${field}s` as keyof typeof availableOptions
+          const allValues = availableOptions[optionKey] || []
+          if (allValues.length > 0) {
+            newSuggestions.push({ field, values: allValues.slice(0, 10) })
+          }
         }
       } else {
-        const optionKey = `${field}s` as keyof typeof availableOptions
-        const values = availableOptions[optionKey]?.filter(v => 
-          v.toLowerCase().includes(lowerValue)
-        ) || []
-        if (values.length > 0) {
-          newSuggestions.push({ field, values })
+        // User has typed colon and is filtering values
+        if (field === "priority") {
+          const priorities = ["1", "2", "3", "4", "5"].filter(p => p.includes(lowerValue))
+          if (priorities.length > 0) {
+            newSuggestions.push({ field: "priority", values: priorities })
+          }
+        } else {
+          const optionKey = `${field}s` as keyof typeof availableOptions
+          const allValues = availableOptions[optionKey] || []
+          const values = allValues.filter(v => v.toLowerCase().includes(lowerValue))
+          if (values.length > 0) {
+            newSuggestions.push({ field, values })
+          }
         }
       }
     } else {
@@ -235,7 +275,7 @@ export function RecordsFilters({
 
   return (
     <>
-    <Card className="p-4 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/60 border-slate-200/60 shadow-xl shadow-slate-200/20 backdrop-blur-sm">
+    <Card className="p-4 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/60 border-slate-200/60 shadow-xl shadow-slate-200/20 backdrop-blur-sm relative">
       <div className="flex flex-col gap-3">
         {/* Search Input with Active Filters and Date Range */}
         <div className="flex gap-3">
@@ -323,6 +363,16 @@ export function RecordsFilters({
                 >
                   Last 90 days
                 </button>
+                <button
+                  onClick={() => { 
+                    setDateRange("Last 2 years"); 
+                    setShowDatePicker(false);
+                    onDateRangeChange?.("Last 2 years");
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm rounded-full hover:bg-gradient-to-r hover:from-rose-50 hover:to-red-100 hover:text-red-700 hover:shadow-md transition-all duration-200"
+                >
+                  Last 2 years
+                </button>
                 <div className="border-t border-slate-200 my-2"></div>
                 <button
                   onClick={() => { 
@@ -374,7 +424,18 @@ export function RecordsFilters({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onFocus={() => searchQuery && setShowSuggestions(true)}
+                onFocus={() => {
+                  generateSuggestions(searchQuery)
+                  setShowSuggestions(true)
+                }}
+                onClick={() => {
+                  generateSuggestions(searchQuery)
+                  setShowSuggestions(true)
+                }}
+                onBlur={() => {
+                  // Delay hiding to allow clicking suggestions
+                  setTimeout(() => setShowSuggestions(false), 200)
+                }}
                 placeholder={activeFilters.length === 0 ? "Filter by service:value, source:value, category:value, priority:1-5..." : ""}
                 className="flex-1 min-w-[200px] border-0 p-0 h-6 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
@@ -394,7 +455,7 @@ export function RecordsFilters({
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute z-50 w-full mt-2 bg-gradient-to-br from-white via-slate-50/95 to-slate-100/80 border-2 border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-300/30 max-h-[400px] overflow-y-auto backdrop-blur-md">
+            <div className="absolute z-[100] w-full mt-2 bg-gradient-to-br from-white via-slate-50/95 to-slate-100/80 border-2 border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-300/30 max-h-[400px] overflow-y-auto backdrop-blur-md">
               {suggestions.map((suggestion) => (
                 <div key={suggestion.field} className="p-2">
                   <div className="text-xs font-semibold text-muted-foreground px-2 py-1">
@@ -415,12 +476,21 @@ export function RecordsFilters({
                 </div>
               ))}
               
-              <div className="p-4 border-t border-slate-200/60 bg-gradient-to-r from-slate-100/80 to-slate-200/60 backdrop-blur-sm rounded-b-3xl">
-                <div className="text-xs text-muted-foreground px-2">
-                  <p className="font-medium mb-1">Tips:</p>
-                  <p>• Type <code className="px-1 py-0.5 bg-background rounded">service:</code> to filter by service</p>
-                  <p>• Type <code className="px-1 py-0.5 bg-background rounded">priority:1</code> for priority filters</p>
-                  <p>• Use backspace to remove the last filter</p>
+              <div className="p-4 border-t border-slate-200/60 bg-gradient-to-r from-slate-50/90 to-slate-100/70 backdrop-blur-sm rounded-b-3xl">
+                <div className="text-xs text-slate-600 space-y-1.5">
+                  <p className="font-semibold mb-2 text-slate-700">Search Tips:</p>
+                  <p className="flex items-start gap-2">
+                    <span className="text-slate-400">•</span>
+                    <span>Type <code className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-700">service:metro</code> to filter by service</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <span className="text-slate-400">•</span>
+                    <span>Type <code className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-700">priority:1</code> for priority filters</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <span className="text-slate-400">•</span>
+                    <span>Use <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono shadow-sm">Backspace</kbd> to remove the last filter</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -510,22 +580,110 @@ export function RecordsFilters({
                   >
                     Pie Chart
                   </button>
+                  <button
+                    onClick={() => onGraphicTypeChange('areaChart')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 ${
+                      graphicType === 'areaChart'
+                        ? 'bg-gradient-to-br from-red-100 to-rose-200 text-red-700 border-2 border-red-300 shadow-md hover:shadow-lg'
+                        : 'bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 border-2 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:scale-105'
+                    }`}
+                  >
+                    Area Chart
+                  </button>
+                  <button
+                    onClick={() => onGraphicTypeChange('treemap')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 ${
+                      graphicType === 'treemap'
+                        ? 'bg-gradient-to-br from-red-100 to-rose-200 text-red-700 border-2 border-red-300 shadow-md hover:shadow-lg'
+                        : 'bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 border-2 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:scale-105'
+                    }`}
+                  >
+                    Treemap
+                  </button>
+                  <button
+                    onClick={() => onGraphicTypeChange('lineChart')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 ${
+                      graphicType === 'lineChart'
+                        ? 'bg-gradient-to-br from-red-100 to-rose-200 text-red-700 border-2 border-red-300 shadow-md hover:shadow-lg'
+                        : 'bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 border-2 border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md hover:scale-105'
+                    }`}
+                  >
+                    Line Chart
+                  </button>
                 </div>
 
                 {onGroupByChange && (
                   <div className="flex items-center gap-2 pl-4 border-l border-slate-200">
                     <span className="text-xs text-slate-500 font-medium">Group by:</span>
                     <select
-                      value={groupBy}
-                      onChange={(e) => onGroupByChange(e.target.value)}
+                      value={groupBy.includes(',') ? groupBy.split(',')[0] : groupBy}
+                      onChange={(e) => {
+                        const currentParts = groupBy.includes(',') ? groupBy.split(',') : [groupBy]
+                        if (currentParts.length > 1) {
+                          // Make sure second selection is different from new first selection
+                          const secondSelection = currentParts[1] === e.target.value 
+                            ? ['service', 'source', 'category', 'priority', 'subservice'].find(opt => opt !== e.target.value) || 'service'
+                            : currentParts[1]
+                          onGroupByChange(`${e.target.value},${secondSelection}`)
+                        } else {
+                          onGroupByChange(e.target.value)
+                        }
+                      }}
                       className="px-3 py-1.5 text-xs font-semibold rounded-full border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition-all duration-300"
                     >
-                      <option value="service">Service</option>
-                      <option value="source">Source</option>
-                      <option value="category">Category</option>
-                      <option value="priority">Priority</option>
-                      <option value="subservice">Subservice</option>
+                      {['service', 'source', 'category', 'priority', 'subservice']
+                        .filter(option => !groupBy.includes(',') || option !== groupBy.split(',')[1])
+                        .map(option => (
+                          <option key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </option>
+                        ))}
                     </select>
+                    
+                    {!groupBy.includes(',') ? (
+                      <button
+                        onClick={() => {
+                          const firstField = groupBy
+                          const availableOptions = ['service', 'source', 'category', 'priority', 'subservice']
+                          const nextOption = availableOptions.find(opt => opt !== firstField) || 'service'
+                          onGroupByChange(`${groupBy},${nextOption}`)
+                        }}
+                        className="px-2 py-1.5 text-xs font-semibold rounded-full border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition-all duration-300 flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add grouping
+                      </button>
+                    ) : (
+                      <>
+                        <span className="text-xs text-slate-400">→</span>
+                        <select
+                          value={groupBy.split(',')[1]}
+                          onChange={(e) => {
+                            const firstGroup = groupBy.split(',')[0]
+                            onGroupByChange(`${firstGroup},${e.target.value}`)
+                          }}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-full border-2 border-slate-200 bg-gradient-to-br from-white to-slate-50 text-slate-600 hover:from-slate-50 hover:to-slate-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 shadow-sm transition-all duration-300"
+                        >
+                          {['service', 'source', 'category', 'priority', 'subservice']
+                            .filter(option => option !== groupBy.split(',')[0])
+                            .map(option => (
+                              <option key={option} value={option}>
+                                {option.charAt(0).toUpperCase() + option.slice(1)}
+                              </option>
+                            ))}
+                        </select>
+                        <button
+                          onClick={() => {
+                            const firstGroup = groupBy.split(',')[0]
+                            onGroupByChange(firstGroup)
+                          }}
+                          className="p-1.5 rounded-full hover:bg-red-100 text-slate-400 hover:text-red-600 transition-all duration-200"
+                          title="Remove second grouping"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -540,7 +698,7 @@ export function RecordsFilters({
       <>
         {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-black/50 z-[9998]"
+          className="fixed inset-0 bg-black/50 z-[99999]"
           onClick={() => {
             setCustomStartDate(undefined)
             setCustomEndDate(undefined)
@@ -551,9 +709,9 @@ export function RecordsFilters({
         />
         
         {/* Modal */}
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-[100000] pointer-events-none">
           <div 
-            className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl pointer-events-auto overflow-hidden"
+            className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl pointer-events-auto overflow-hidden relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -575,10 +733,14 @@ export function RecordsFilters({
                         selected={customStartDate}
                         onSelect={setCustomStartDate}
                         disabled={(date) => date > new Date()}
-                        className="w-full"
+                        className="w-full relative z-10"
                         classNames={{
-                          today: "bg-gradient-to-br from-rose-100 to-red-200 text-red-900 font-semibold rounded-full shadow-sm",
-                          selected: "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-full shadow-lg",
+                          today: "bg-gradient-to-br from-rose-100 to-red-200 text-red-900 font-semibold rounded-full shadow-sm cursor-pointer",
+                          selected: "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-full shadow-lg cursor-pointer",
+                          day: "cursor-pointer hover:bg-slate-100 rounded-full transition-colors",
+                          nav_button: "cursor-pointer hover:bg-slate-100 rounded-full transition-colors",
+                          nav_button_previous: "cursor-pointer",
+                          nav_button_next: "cursor-pointer"
                         }}
                       />
                     </div>
@@ -604,10 +766,14 @@ export function RecordsFilters({
                         selected={customEndDate}
                         onSelect={setCustomEndDate}
                         disabled={(date) => date > new Date() || (customStartDate ? date < customStartDate : false)}
-                        className="w-full"
+                        className="w-full relative z-10"
                         classNames={{
-                          today: "bg-gradient-to-br from-rose-100 to-red-200 text-red-900 font-semibold rounded-full shadow-sm",
-                          selected: "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-full shadow-lg",
+                          today: "bg-gradient-to-br from-rose-100 to-red-200 text-red-900 font-semibold rounded-full shadow-sm cursor-pointer",
+                          selected: "bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 rounded-full shadow-lg cursor-pointer",
+                          day: "cursor-pointer hover:bg-slate-100 rounded-full transition-colors",
+                          nav_button: "cursor-pointer hover:bg-slate-100 rounded-full transition-colors",
+                          nav_button_previous: "cursor-pointer",
+                          nav_button_next: "cursor-pointer"
                         }}
                       />
                     </div>
