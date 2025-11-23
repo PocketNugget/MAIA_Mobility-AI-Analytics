@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { Incident } from "@/lib/types"
 
 interface RecordsTableProps {
@@ -17,6 +17,7 @@ interface RecordsTableProps {
 }
 
 export function RecordsTable({ filters, totalCount, onToggleActionMenu, isActionMenuCollapsed, dateRange, onTotalCountChange }: RecordsTableProps) {
+  const router = useRouter()
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
@@ -175,12 +176,15 @@ export function RecordsTable({ filters, totalCount, onToggleActionMenu, isAction
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Category</th>
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Priority</th>
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Summary</th>
-              <th className="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-12"></th>
             </tr>
           </thead>
           <tbody>
             {incidents.map((incident) => (
-              <tr key={incident.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer">
+              <tr 
+                key={incident.id} 
+                className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer hover:bg-blue-50/30"
+                onClick={() => router.push(`/records/${incident.id}`)}
+              >
                 <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap font-mono">{formatDate(incident.time)}</td>
                 <td className="px-4 py-3 text-xs text-slate-900 font-medium">{incident.service}</td>
                 <td className="px-4 py-3 text-xs text-slate-600">{incident.source}</td>
@@ -192,13 +196,6 @@ export function RecordsTable({ filters, totalCount, onToggleActionMenu, isAction
                   </span>
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-600 max-w-md truncate">{incident.summary}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/records/${incident.id}`}>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-slate-100 rounded-full transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                    </Button>
-                  </Link>
-                </td>
               </tr>
             ))}
           </tbody>

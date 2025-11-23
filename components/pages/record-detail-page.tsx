@@ -143,24 +143,65 @@ export function RecordDetailPage({ recordId }: RecordDetailPageProps) {
           </Card>
 
           {/* Keywords Section */}
-          {record.keywords && record.keywords.length > 0 && (
-            <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Tag className="w-5 h-5 text-slate-600" />
-                <h3 className="font-bold text-slate-900">Keywords</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {record.keywords.map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="px-4 py-2 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-2 border-blue-300 rounded-full text-sm font-semibold shadow-sm"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            </Card>
-          )}
+          {(() => {
+            let parsedKeywords: string[] = []
+            
+            console.log('Raw keywords data:', record.keywords)
+            console.log('Keywords type:', typeof record.keywords)
+            console.log('Is array?', Array.isArray(record.keywords))
+            
+            if (record.keywords) {
+              try {
+                // If it's already an array of clean strings
+                if (Array.isArray(record.keywords)) {
+                  parsedKeywords = record.keywords.map((keyword: any) => {
+                    let cleanKeyword = String(keyword)
+                    // Remove all types of quotes and extra characters
+                    cleanKeyword = cleanKeyword.replace(/^[\["\s]+|[\]"\s]+$/g, '')
+                    cleanKeyword = cleanKeyword.replace(/["']/g, '')
+                    return cleanKeyword.trim()
+                  }).filter(Boolean)
+                } else {
+                  // Handle string format - could be JSON array or comma separated
+                  let keywordsStr = String(record.keywords).trim()
+                  
+                  // Remove outer brackets if present
+                  if (keywordsStr.startsWith('[') && keywordsStr.endsWith(']')) {
+                    keywordsStr = keywordsStr.slice(1, -1)
+                  }
+                  
+                  // Split by comma and clean each keyword
+                  parsedKeywords = keywordsStr.split(',').map((keyword: string) => {
+                    return keyword.replace(/["'\s\[\]]/g, '').trim()
+                  }).filter(Boolean)
+                }
+                
+                console.log('Parsed keywords:', parsedKeywords)
+              } catch (e) {
+                console.error('Error parsing keywords:', e)
+                parsedKeywords = []
+              }
+            }
+            
+            return parsedKeywords.length > 0 ? (
+              <Card className="bg-white border-2 border-slate-200 p-6 space-y-4 rounded-2xl shadow-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag className="w-5 h-5 text-slate-600" />
+                  <h3 className="font-bold text-slate-900">Keywords</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {parsedKeywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-2 border-blue-300 rounded-full text-sm font-semibold shadow-sm"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+            ) : null
+          })()}
 
           {/* Sentiment Analysis */}
           {record.sentiment_analysis && (

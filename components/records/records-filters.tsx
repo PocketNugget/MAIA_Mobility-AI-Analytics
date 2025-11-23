@@ -139,8 +139,11 @@ export function RecordsFilters({
 
   useEffect(() => {
     generateSuggestions(searchQuery)
-    if (searchQuery.length > 0 || suggestions.length > 0) {
+    // Only show suggestions if there's a search query
+    if (searchQuery.length > 0) {
       setShowSuggestions(true)
+    } else {
+      setShowSuggestions(false)
     }
   }, [searchQuery])
 
@@ -148,16 +151,10 @@ export function RecordsFilters({
     const lowerQuery = query.toLowerCase()
     const newSuggestions: { field: string; values: string[] }[] = []
 
-    // If query is empty, show all available options
+    // If query is empty, only show suggestions when explicitly requested (on focus)
     if (query.length === 0) {
-      Object.entries(availableOptions).forEach(([key, values]) => {
-        const field = key.slice(0, -1) // Remove 's' from end
-        if (values.length > 0) {
-          newSuggestions.push({ field, values: values.slice(0, 5) })
-        }
-      })
-      newSuggestions.push({ field: "priority", values: ["1", "2", "3", "4", "5"] })
-      setSuggestions(newSuggestions)
+      // Don't automatically populate suggestions for empty query
+      setSuggestions([])
       return
     }
 
@@ -425,11 +422,37 @@ export function RecordsFilters({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
-                  generateSuggestions(searchQuery)
+                  // Show all available options when focusing on empty input
+                  if (searchQuery.length === 0) {
+                    const allSuggestions: { field: string; values: string[] }[] = []
+                    Object.entries(availableOptions).forEach(([key, values]) => {
+                      const field = key.slice(0, -1) // Remove 's' from end
+                      if (values.length > 0) {
+                        allSuggestions.push({ field, values: values.slice(0, 5) })
+                      }
+                    })
+                    allSuggestions.push({ field: "priority", values: ["1", "2", "3", "4", "5"] })
+                    setSuggestions(allSuggestions)
+                  } else {
+                    generateSuggestions(searchQuery)
+                  }
                   setShowSuggestions(true)
                 }}
                 onClick={() => {
-                  generateSuggestions(searchQuery)
+                  // Show all available options when clicking on empty input
+                  if (searchQuery.length === 0) {
+                    const allSuggestions: { field: string; values: string[] }[] = []
+                    Object.entries(availableOptions).forEach(([key, values]) => {
+                      const field = key.slice(0, -1) // Remove 's' from end
+                      if (values.length > 0) {
+                        allSuggestions.push({ field, values: values.slice(0, 5) })
+                      }
+                    })
+                    allSuggestions.push({ field: "priority", values: ["1", "2", "3", "4", "5"] })
+                    setSuggestions(allSuggestions)
+                  } else {
+                    generateSuggestions(searchQuery)
+                  }
                   setShowSuggestions(true)
                 }}
                 onBlur={() => {

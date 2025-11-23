@@ -3,9 +3,12 @@ import { RecordDetailPage } from "@/components/pages/record-detail-page"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 
-export default async function RecordDetail({ params }: { params: Promise<{ id: string }> }) {
+async function RecordDetailWrapper({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  
+  return <RecordDetailPage recordId={id} />
+}
+
+export default function RecordDetail({ params }: { params: Promise<{ id: string }> }) {
   return (
     <MainLayout>
       <Suspense fallback={
@@ -16,7 +19,7 @@ export default async function RecordDetail({ params }: { params: Promise<{ id: s
           </div>
         </div>
       }>
-        <RecordDetailPage recordId={id} />
+        <RecordDetailWrapper params={params} />
       </Suspense>
     </MainLayout>
   )
