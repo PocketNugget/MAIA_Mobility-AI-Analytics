@@ -335,24 +335,24 @@ export function DashboardPage() {
     : undefined
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 relative">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-red-50/30 via-slate-50 to-rose-50/20 relative">
       {/* Animated background pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)] pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f9ff_1px,transparent_1px),linear-gradient(to_bottom,#f0f9ff_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(239,68,68,0.04),transparent_50%)] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#fef2f2_1px,transparent_1px),linear-gradient(to_bottom,#fef2f2_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
 
       {/* Header Section - Full Width */}
-      <div className="relative z-20 bg-gradient-to-r from-white/90 via-blue-50/90 to-white/90 backdrop-blur-xl border-b border-blue-200/40 shadow-lg shadow-blue-500/5">
+      <div className="relative z-20 bg-gradient-to-r from-white/90 via-red-50/90 to-white/90 backdrop-blur-xl border-b border-red-200/40 shadow-lg shadow-red-500/5">
           <div className="px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 bg-clip-text text-transparent mb-2 animate-gradient bg-[length:200%_auto]">
+                <h1 className="text-4xl font-black bg-gradient-to-r from-red-600 via-rose-500 to-red-600 bg-clip-text text-transparent mb-2 animate-gradient bg-[length:200%_auto]">
                   Dashboard
                 </h1>
                 <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
                   {isEditMode ? (
                     <>
-                      <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                      <span className="inline-flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                         EDIT MODE
                       </span>
                       <span className="text-slate-300">•</span>
@@ -378,8 +378,8 @@ export function DashboardPage() {
                   size="default"
                   className={`flex items-center gap-2 transition-all duration-150 font-bold ${
                     isEditMode
-                      ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-600 hover:from-blue-700 hover:via-blue-800 hover:to-blue-700 text-white shadow-xl shadow-blue-500/50 border-0 hover:shadow-2xl hover:shadow-blue-500/60 hover:scale-105"
-                      : "border-2 border-slate-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50 hover:border-blue-400 hover:shadow-lg"
+                      ? "bg-gradient-to-r from-red-600 via-red-700 to-red-600 hover:from-red-700 hover:via-red-800 hover:to-red-700 text-white shadow-xl shadow-red-500/50 border-0 hover:shadow-2xl hover:shadow-red-500/60 hover:scale-105"
+                      : "border-2 border-slate-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-red-50 hover:border-red-400 hover:shadow-lg"
                   }`}
                 >
                   {isEditMode ? (
@@ -455,7 +455,7 @@ export function DashboardPage() {
         }
         .react-grid-item.react-dragging > div {
           transform: scale(1.05) rotate(2deg) !important;
-          filter: drop-shadow(0 20px 40px rgba(59, 130, 246, 0.4)) !important;
+          filter: drop-shadow(0 20px 40px rgba(239, 68, 68, 0.4)) !important;
           transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease !important;
         }
         .react-grid-item:not(.react-dragging):hover > div {
@@ -463,9 +463,9 @@ export function DashboardPage() {
           filter: drop-shadow(0 12px 24px rgba(0,0,0,0.15)) !important;
         }
         .edit-mode-item:hover {
-          border-color: rgba(59, 130, 246, 0.8) !important;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 8px 24px rgba(59, 130, 246, 0.2) !important;
-          background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(239,246,255,0.9)) !important;
+          border-color: rgba(239, 68, 68, 0.8) !important;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1), 0 8px 24px rgba(239, 68, 68, 0.2) !important;
+          background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(254,242,242,0.9)) !important;
         }
         .react-grid-item img {
           pointer-events: none;
@@ -484,13 +484,13 @@ export function DashboardPage() {
           bottom: 4px;
           width: 10px;
           height: 10px;
-          border-right: 3px solid rgba(59, 130, 246, 0.5);
-          border-bottom: 3px solid rgba(59, 130, 246, 0.5);
+          border-right: 3px solid rgba(239, 68, 68, 0.5);
+          border-bottom: 3px solid rgba(239, 68, 68, 0.5);
           transition: all 0.2s ease;
         }
         .react-grid-item:hover > .react-resizable-handle::after {
-          border-right: 3px solid rgba(59, 130, 246, 1);
-          border-bottom: 3px solid rgba(59, 130, 246, 1);
+          border-right: 3px solid rgba(239, 68, 68, 1);
+          border-bottom: 3px solid rgba(239, 68, 68, 1);
           width: 12px;
           height: 12px;
         }
@@ -498,7 +498,7 @@ export function DashboardPage() {
           display: none;
         }
         .react-grid-item.react-grid-placeholder {
-          background: rgb(59, 130, 246);
+          background: rgb(239, 68, 68);
           opacity: 0.2;
           transition-duration: 100ms;
           z-index: 2;
@@ -622,7 +622,7 @@ export function DashboardPage() {
               }}
             >
               {/* Main content with glass effect */}
-              <div className="w-full h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/90 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] group-hover/item:shadow-[0_30px_60px_-15px_rgba(59,130,246,0.4)] transition-all duration-200 relative" style={{
+              <div className="w-full h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/90 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] group-hover/item:shadow-[0_30px_60px_-15px_rgba(239,68,68,0.4)] transition-all duration-200 relative" style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95))'
               }}>
                 {/* Edit mode action buttons */}
@@ -640,7 +640,7 @@ export function DashboardPage() {
                       }}
                       size="sm"
                       variant="secondary"
-                      className="h-8 w-8 p-0 rounded-lg bg-white/95 hover:bg-blue-500 hover:text-white border border-slate-200 shadow-lg backdrop-blur-sm transition-all duration-150 hover:scale-110"
+                      className="h-8 w-8 p-0 rounded-lg bg-white/95 hover:bg-red-500 hover:text-white border border-slate-200 shadow-lg backdrop-blur-sm transition-all duration-150 hover:scale-110"
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
@@ -656,7 +656,7 @@ export function DashboardPage() {
                       }}
                       size="sm"
                       variant="secondary"
-                      className="h-8 w-8 p-0 rounded-lg bg-white/95 hover:bg-red-500 hover:text-white border border-slate-200 shadow-lg backdrop-blur-sm transition-all duration-150 hover:scale-110"
+                      className="h-8 w-8 p-0 rounded-lg bg-white/95 hover:bg-red-600 hover:text-white border border-slate-200 shadow-lg backdrop-blur-sm transition-all duration-150 hover:scale-110"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -688,7 +688,7 @@ export function DashboardPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 px-6 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-red-600 via-rose-500 to-red-600 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 Edit Component - {editingComponent.type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
@@ -706,9 +706,9 @@ export function DashboardPage() {
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200 rounded-lg p-4">
                   <p className="text-sm text-slate-700 flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-blue-600" />
+                    <Activity className="w-4 h-4 text-red-600" />
                     <span className="font-semibold">Component ID:</span> {editingComponent.id}
                   </p>
                 </div>
@@ -742,7 +742,7 @@ export function DashboardPage() {
                   // Save logic here
                   setEditingComponent(null)
                 }}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-lg"
               >
                 Save Changes
               </Button>
