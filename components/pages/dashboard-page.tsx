@@ -622,7 +622,7 @@ export function DashboardPage() {
               }}
             >
               {/* Main content with glass effect */}
-              <div className="w-full h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/90 shadow-xl shadow-slate-900/5 group-hover/item:shadow-2xl group-hover/item:shadow-blue-500/10 transition-all duration-100 relative" style={{
+              <div className="w-full h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/90 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] group-hover/item:shadow-[0_30px_60px_-15px_rgba(59,130,246,0.4)] transition-all duration-200 relative" style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95))'
               }}>
                 {/* Edit mode action buttons */}
