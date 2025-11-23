@@ -1,4 +1,5 @@
 import { Groq } from "groq-sdk";
+import {Pattern, Solution} from "@/lib/types";
 
 export type GroqQueryParams = {
   query: string;
@@ -191,4 +192,124 @@ function validateItem(item: any, index: number): AnalyzedFeedback | null{
         summary: item.summary || `Feedback ${index + 1}`,
         keywords: Array.isArray(item.keywords) ? item.keywords : []
     };
+}
+
+export async function generateSolutionsForPattern(pattern: Pattern): Promise<Solution[]> {
+    const systemPrompt = `You are an expert in Mexico City's metro and integrated mobility systems (Metro CDMX, Metrobús, Trolebús, Cablebús, RTP, Ecobici).
+
+You MUST respond with ONLY valid JSON, no markdown, no explanations, no code blocks.
+
+Analyze the given pattern (a recurring problem affecting Mexico City metro/transit users) and propose exactly 3 realistic solutions.
+
+Return a JSON array with this EXACT structure:
+[
+  {
+    "name": "Solution name",
+    "description": "Detailed explanation of the solution in Spanish",
+    "cost": {
+      "min": number in Mexican pesos,
+      "max": number in Mexican pesos
+    },
+    "feasibility": number from 0-100 (0=impossible, 100=very feasible),
+    "timeOfImplementation": {
+      "start": "YYYY-MM-DD",
+      "end": "YYYY-MM-DD"
+    }
+  }
+]
+
+Requirements:
+- All 3 solutions must be actionable and realistic for Mexico City's context
+- Consider budget constraints, infrastructure, and local regulations
+- Feasibility should account for: technical complexity, political will, budget availability, and time required
+- Cost ranges should be realistic estimates in MXN
+- Implementation timeframes should be practical (consider planning, approval, execution)
+- Descriptions should be in Spanish and detailed enough to understand the approach
+- Solutions should address the root cause identified in the pattern`;
+
+    const userPrompt = `Analyze this transit pattern and propose 3 solutions:
+
+Pattern ID: ${pattern.id}
+Title: ${pattern.title}
+Description: ${pattern.description}
+Priority: ${pattern.priority}
+Frequency: ${pattern.frequency} incidents
+Time Range: ${pattern.timeRangeStart || 'N/A'} to ${pattern.timeRangeEnd || 'N/A'}
+Total Incidents: ${pattern.incidentIds.length}
+Filters: ${JSON.stringify(pattern.filters, null, 2)}
+
+Context:
+- This pattern represents a recurring problem in Mexico City's metro/transit system
+- Solutions must be feasible within CDMX's transit infrastructure and budget
+- Consider short-term, medium-term, and long-term solutions
+
+Respond with ONLY the JSON array of 3 solutions, nothing else.`;
+
+    try {
+        const groqResult = await runGroqQuery({
+            system: systemPrompt,
+            query: userPrompt,
+            temperature: 0.4, // Slightly higher for creative solutions
+            max_tokens: 4000,
+        });
+
+        // Parse and validate the response
+        const solutions = parseGroqResponse(groqResult);
+
+        // Validate we got exactly 3 solutions
+        if (solutions.length !== 3) {
+            throw new Error("Expected 3 solutions, got ${solutions.length}");
+        }
+
+        return solutions;
+    } catch (error) {
+        console.error('Error generating solutions:', error);
+        throw new Error("Failed to generate solutions: ${error instanceof Error ? error.message : 'Unknown error'}");
+    }
+}
+
+function parseGroqResponse(response: any): Solution[] {
+    const responseText = response.choices[0].message.content;
+    try{
+        console.log("RESPONSE");
+        console.log(response);
+        let cleaned = responseText.trim();
+        console.log("CLEANED RESPONSE");
+        console.log(cleaned);
+        if (cleaned.startsWith('')) {
+            cleaned = cleaned.replace(/json\n?/g, '').replace(/```\n?/g, '');
+        }
+        // Parse JSON
+        const parsed = JSON.parse(cleaned);
+
+        // Validate it's an array
+        if (!Array.isArray(parsed)) {
+            throw new Error('Response is not an array');
+        }
+
+        const solutions: Solution[] = parsed.map((item, idx) => {
+            // Validate dates
+            const startDate = new Date(item.timeOfImplementation.start);
+            const endDate = new Date(item.timeOfImplementation.end);
+
+            return {
+                name: item.name,
+                description: item.description,
+                cost: {
+                    min: item.cost.min,
+                    max: item.cost.max,
+                },
+                feasibility: item.feasibility,
+                timeOfImplementation: {
+                    start: item.timeOfImplementation.start,
+                    end: item.timeOfImplementation.end,
+                },
+            };
+        });
+        return solutions;
+    }
+    catch(error){
+        console.error('Failed to parse Groq response:', response);
+        throw new Error("JSON parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}");
+    }
 }
