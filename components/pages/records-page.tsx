@@ -171,9 +171,9 @@ export function RecordsPage() {
       {/* Header Section */}
       <div className="flex-shrink-0 relative z-20 bg-gradient-to-r from-white/90 via-red-50/90 to-white/90 backdrop-blur-xl shadow-lg shadow-red-500/5">
         <div className="px-8 py-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-0">
             <div className="flex items-center gap-4 flex-wrap">
-              <h1 className="text-2xl font-black bg-gradient-to-r from-red-600 via-rose-500 to-red-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+              <h1 className="text-3xl font-black bg-gradient-to-r from-red-600 via-rose-500 to-red-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
                 Records
               </h1>
               <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
@@ -191,28 +191,28 @@ export function RecordsPage() {
               </p>
             </div>
           </div>
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-red-200 to-transparent" />
-          <div className="mt-4">
-            <RecordsFilters
-              onFiltersChange={setUnifiedFilters}
-              onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
-              isActionMenuCollapsed={isActionMenuCollapsed}
-              availableOptions={availableOptions}
-              visualizationMode={visualizationMode}
-              onVisualizationModeChange={setVisualizationMode}
-              graphicType={graphicType}
-              onGraphicTypeChange={setGraphicType}
-              groupBy={groupBy}
-              onGroupByChange={setGroupBy}
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-              externalFilters={unifiedFilters}
-            />
-          </div>
         </div>
       </div>
 
+      <div >
       {/* Main Content Area */}
+                <RecordsFilters
+            onFiltersChange={setUnifiedFilters}
+            onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
+            isActionMenuCollapsed={isActionMenuCollapsed}
+            availableOptions={availableOptions}
+            visualizationMode={visualizationMode}
+            onVisualizationModeChange={setVisualizationMode}
+            graphicType={graphicType}
+            onGraphicTypeChange={setGraphicType}
+            groupBy={groupBy}
+            onGroupByChange={setGroupBy}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            externalFilters={unifiedFilters}
+          />
+      </div>
+
       <div className="flex-1 flex overflow-hidden relative z-10 min-h-0">
         <RecordsFilterPanel
           onFiltersChange={setUnifiedFilters}
