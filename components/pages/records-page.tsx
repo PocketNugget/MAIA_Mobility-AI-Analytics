@@ -194,7 +194,7 @@ export function RecordsPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-5 pb-3 ">
+      <div className="px-4 pt-5 pb-4 ">
         <RecordsFilters
           onFiltersChange={setUnifiedFilters}
           onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
@@ -220,23 +220,21 @@ export function RecordsPage() {
           loading={loading}
           selectedFilters={unifiedFilters}
         />
-        <div className="flex-1 overflow-hidden px-3 py-4 min-w-0">
-          <div>
-            {visualizationMode === 'records' ? (
-              <RecordsTable
-                filters={actualFilters}
-                totalCount={totalCount}
-                onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
-                isActionMenuCollapsed={isActionMenuCollapsed}
-                dateRange={dateRange}
-                onTotalCountChange={setTotalCount}
-              />
-            ) : visualizationMode === 'patterns' ? (
-              <RecordsPatterns filters={actualFilters} dateRange={dateRange} />
-            ) : (
-              <RecordsGraphics filters={actualFilters} graphicType={graphicType} groupBy={groupBy} dateRange={dateRange} />
-            )}
-          </div>
+        <div className="flex-1 overflow-hidden min-w-0 flex flex-col">
+          {visualizationMode === 'records' ? (
+            <RecordsTable
+              filters={actualFilters}
+              totalCount={totalCount}
+              onToggleActionMenu={() => setIsActionMenuCollapsed(!isActionMenuCollapsed)}
+              isActionMenuCollapsed={isActionMenuCollapsed}
+              dateRange={dateRange}
+              onTotalCountChange={setTotalCount}
+            />
+          ) : visualizationMode === 'patterns' ? (
+            <RecordsPatterns filters={actualFilters} dateRange={dateRange} />
+          ) : (
+            <RecordsGraphics filters={actualFilters} graphicType={graphicType} groupBy={groupBy} dateRange={dateRange} />
+          )}
         </div>
       </div>
     </div>

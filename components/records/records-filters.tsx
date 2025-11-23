@@ -430,7 +430,7 @@ export function RecordsFilters({
 
         {/* Visualization Mode Selector */}
         {onVisualizationModeChange && (
-          <div className="flex flex-col gap-3 pt-4">
+          <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 font-medium">View:</span>
               <button

@@ -173,9 +173,9 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
 
   if (loading) {
     return (
-      <div className={`transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-64 pr-6'}`}>
+      <div className={`transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-64 mr-6'}`}>
         {!isCollapsed && (
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 h-full">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 h-full">
             <p className="text-xs text-slate-400">Loading filters...</p>
           </div>
         )}
@@ -184,10 +184,10 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
   }
 
   return (
-    <div className={`flex flex-col h-full transition-all duration-300 relative ${isCollapsed ? 'w-0' : 'w-64 pr-6'}`}>
+    <div className={`flex flex-col h-full transition-all duration-300 relative ${isCollapsed ? 'w-0' : 'w-64 mr-6'}`}>
       {!isCollapsed && (
         <div className="flex flex-col h-full bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="p-6 border-b border-slate-200 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-700">Filters</h3>
             {getActiveFilterCount() > 0 && (
               <button
@@ -204,7 +204,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
               <div key={facet.field} className="border-b border-slate-100 last:border-b-0">
                 <button
                   onClick={() => toggleFacet(facet.field)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
                 >
                   <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     {facet.label}
@@ -217,9 +217,9 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                 </button>
 
                 {expandedFacets.has(facet.field) && (
-                  <div className="px-4 pb-3 space-y-2">
+                  <div className="px-6 pb-4 space-y-2">
                     {/* Select All option */}
-                    <label className="flex items-center gap-2 cursor-pointer group hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors">
+                    <label className="flex items-center gap-2 cursor-pointer group hover:bg-slate-50 -mx-2 px-2 py-1.5 rounded transition-colors">
                       <Checkbox
                         checked={facet.options.every(o => {
                           const val = facet.field === "priority" ? o.value.replace("P", "") : o.value
@@ -249,7 +249,7 @@ export function RecordsFilterPanel({ onFiltersChange, isCollapsed = false, facet
                       return (
                         <div
                           key={option.value}
-                          className="flex items-center gap-2 group hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors"
+                          className="flex items-center gap-2 group hover:bg-slate-50 -mx-2 px-2 py-1.5 rounded transition-colors"
                         >
                           <label className="flex items-center gap-2 cursor-pointer flex-1">
                             <Checkbox

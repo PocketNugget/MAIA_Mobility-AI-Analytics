@@ -151,7 +151,7 @@ export function RecordsTable({ filters, totalCount, onToggleActionMenu, isAction
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={onToggleActionMenu}
-            className="px-3 py-1.5 text-xs font-medium rounded-md transition-all bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+            className="px-3 py-1.5 text-xs font-medium rounded-full transition-all bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
           >
             {isActionMenuCollapsed ? "Show" : "Hide"} filters
           </button>
@@ -181,18 +181,18 @@ export function RecordsTable({ filters, totalCount, onToggleActionMenu, isAction
           <tbody>
             {incidents.map((incident) => (
               <tr key={incident.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer">
-                <td className="px-4 py-0 text-xs text-slate-500 whitespace-nowrap font-mono">{formatDate(incident.time)}</td>
-                <td className="px-4 py-0 text-xs text-slate-900 font-medium">{incident.service}</td>
-                <td className="px-4 py-0 text-xs text-slate-600">{incident.source}</td>
-                <td className="px-4 py-0 text-xs text-slate-600">{incident.subservice}</td>
-                <td className="px-4 py-0 text-xs text-slate-600">{incident.category}</td>
-                <td className="px-4 py-0 text-xs">
+                <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap font-mono">{formatDate(incident.time)}</td>
+                <td className="px-4 py-3 text-xs text-slate-900 font-medium">{incident.service}</td>
+                <td className="px-4 py-3 text-xs text-slate-600">{incident.source}</td>
+                <td className="px-4 py-3 text-xs text-slate-600">{incident.subservice}</td>
+                <td className="px-4 py-3 text-xs text-slate-600">{incident.category}</td>
+                <td className="px-4 py-3 text-xs">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${getPriorityColor(incident.priority)}`}>
                     P{incident.priority}
                   </span>
                 </td>
-                <td className="px-4 py-0 text-xs text-slate-600 max-w-md truncate">{incident.summary}</td>
-                <td className="px-4 py-0 text-right">
+                <td className="px-4 py-3 text-xs text-slate-600 max-w-md truncate">{incident.summary}</td>
+                <td className="px-4 py-3 text-right">
                   <Link href={`/records/${incident.id}`}>
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-slate-100 rounded-full transition-colors">
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
