@@ -1007,7 +1007,7 @@ export function InternalPatternsPage() {
                                 onClick={() => handleSaveSolution(solution, idx)}
                                 disabled={savingSolution[idx]}
                                 variant="outline"
-                                className="flex-1 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400"
+                                className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400"
                               >
                                 {savingSolution[idx] ? (
                                   <>
@@ -1026,7 +1026,7 @@ export function InternalPatternsPage() {
                                 onClick={() => handleSaveSolution(solution, idx)}
                                 disabled={savingSolution[idx]}
                                 variant="outline"
-                                className="flex-1 border-2 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400"
+                                className="w-full border-2 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400"
                               >
                                 {savingSolution[idx] ? (
                                   <>
@@ -1041,18 +1041,6 @@ export function InternalPatternsPage() {
                                 )}
                               </Button>
                             )}
-                            <Button
-                              onClick={() => {
-                                console.log('View Details clicked:', solution)
-                                setSelectedSolutionDetail(solution)
-                              }}
-                              disabled={!solution.name || !solution.description}
-                              variant="outline"
-                              className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <FileText className="w-4 h-4 mr-2" />
-                              View Details
-                            </Button>
                           </div>
                           )}
                         </div>
