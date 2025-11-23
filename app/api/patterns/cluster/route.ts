@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
           filters: p.filters,
           priority: p.priority,
           frequency: p.frequency,
-          time_range: p.timeRange,
+          time_range_start: p.timeRangeStart,
+          time_range_end: p.timeRangeEnd,
           incident_ids: p.incidentIds,
         })),
       });
@@ -85,8 +86,8 @@ export async function POST(request: NextRequest) {
           filters: pattern.filters,
           priority: pattern.priority,
           frequency: pattern.frequency,
-          time_range_start: pattern.timeRange?.start,
-          time_range_end: pattern.timeRange?.end,
+          time_range_start: pattern.timeRangeStart,
+          time_range_end: pattern.timeRangeEnd,
           incident_ids: pattern.incidentIds,
         })
         .select()

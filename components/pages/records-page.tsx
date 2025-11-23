@@ -36,6 +36,7 @@ export function RecordsPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [createdPatterns, setCreatedPatterns] = useState<Pattern[]>([])
   const [savingPatternIds, setSavingPatternIds] = useState<Set<string>>(new Set())
+  const [creatingSolutionIds, setCreatingSolutionIds] = useState<Set<string>>(new Set())
 
   const handleExplorePatterns = async () => {
     setIsCreatingPatterns(true)
@@ -81,12 +82,14 @@ export function RecordsPage() {
       const clusterResult = await clusterResponse.json()
       
       if (clusterResult.success && clusterResult.patterns) {
-        // Mark patterns as temporary (not yet saved)
-        const tempPatterns = clusterResult.patterns.map((p: any, idx: number) => ({
-          ...p,
-          tempId: `temp-${idx}`,
-          isTemporary: true,
-        }))
+        // Mark patterns as temporary (not yet saved) and sort by frequency descending
+        const tempPatterns = clusterResult.patterns
+          .map((p: any, idx: number) => ({
+            ...p,
+            tempId: `temp-${idx}`,
+            isTemporary: true,
+          }))
+          .sort((a: Pattern, b: Pattern) => b.frequency - a.frequency)
         setCreatedPatterns(tempPatterns)
         setIsDrawerOpen(true)
       } else {
@@ -100,31 +103,47 @@ export function RecordsPage() {
     }
   }
 
-  const handleSavePattern = async (pattern: Pattern) => {
+  const handleSavePattern = async (pattern: Pattern, silent = false) => {
     const patternId = pattern.id || pattern.tempId
-    if (!patternId) return
+    if (!patternId) return null
+    
+    // If already saved, return the existing ID
+    if (pattern.id && !pattern.isTemporary) {
+      return pattern.id
+    }
     
     setSavingPatternIds(prev => new Set(prev).add(patternId))
     
     try {
+      const payload = {
+        title: pattern.title,
+        description: pattern.description,
+        filters: pattern.filters,
+        priority: pattern.priority,
+        frequency: pattern.frequency,
+        time_range_start: pattern.time_range?.start,
+        time_range_end: pattern.time_range?.end,
+        incident_ids: pattern.incident_ids,
+      }
+      
+      console.log('Attempting to save pattern:', {
+        patternId,
+        payload,
+      })
+      
       const response = await fetch('/api/patterns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: pattern.title,
-          description: pattern.description,
-          filters: pattern.filters,
-          priority: pattern.priority,
-          frequency: pattern.frequency,
-          time_range_start: pattern.time_range?.start,
-          time_range_end: pattern.time_range?.end,
-          incident_ids: pattern.incident_ids,
-        }),
+        body: JSON.stringify(payload),
       })
       
+      console.log('Save pattern response status:', response.status)
+      
       const result = await response.json()
+      
+      console.log('Save pattern result:', result)
       
       if (result.success) {
         // Update the pattern to mark it as saved
@@ -135,13 +154,36 @@ export function RecordsPage() {
               : p
           )
         )
-        alert('Pattern saved successfully!')
+        if (!silent) {
+          alert('Pattern saved successfully!')
+        }
+        return result.pattern.id
       } else {
-        alert(`Failed to save pattern: ${result.error}`)
+        console.error('Failed to save pattern:', {
+          error: result.error,
+          details: result.details,
+          payload,
+        })
+        if (!silent) {
+          alert(`Failed to save pattern: ${result.error}${result.details ? '\nDetails: ' + result.details : ''}`)
+        }
+        return null
       }
     } catch (error) {
-      console.error('Error saving pattern:', error)
-      alert('An error occurred while saving the pattern')
+      console.error('Error saving pattern (caught exception):', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        pattern: {
+          title: pattern.title,
+          priority: pattern.priority,
+          frequency: pattern.frequency,
+        },
+      })
+      if (!silent) {
+        alert('An error occurred while saving the pattern: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      }
+      return null
     } finally {
       setSavingPatternIds(prev => {
         const next = new Set(prev)
@@ -151,10 +193,41 @@ export function RecordsPage() {
     }
   }
 
-  const handleCreateSolution = (pattern: Pattern) => {
-    // TODO: Implement solution creation
-    console.log('Create solution for pattern:', pattern)
-    alert('Solution creation feature coming soon!')
+  const handleCreateSolution = async (pattern: Pattern) => {
+    const patternId = pattern.id || pattern.tempId
+    if (!patternId) return
+    
+    setCreatingSolutionIds(prev => new Set(prev).add(patternId))
+    
+    try {
+      // First, ensure the pattern is saved
+      const savedPatternId = await handleSavePattern(pattern, true)
+      
+      if (!savedPatternId) {
+        alert('Failed to save pattern before creating solution')
+        return
+      }
+      
+      // TODO: Implement solution creation API call
+      // const response = await fetch('/api/solutions', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ pattern_id: savedPatternId })
+      // })
+      
+      console.log('Create solution for pattern:', savedPatternId)
+      alert('Solution creation feature coming soon!')
+      
+    } catch (error) {
+      console.error('Error creating solution:', error)
+      alert('An error occurred while creating the solution')
+    } finally {
+      setCreatingSolutionIds(prev => {
+        const next = new Set(prev)
+        next.delete(patternId)
+        return next
+      })
+    }
   }
 
   return (
@@ -186,11 +259,11 @@ export function RecordsPage() {
       </div>
 
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent className="w-[800px] sm:max-w-[800px] overflow-y-auto">
+        <SheetContent className="w-[1000px] sm:max-w-[1000px] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-2xl font-bold">Discovered Patterns</SheetTitle>
-            <SheetDescription>
-              Review and save the patterns identified from your filtered records
+            <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Discovered Patterns</SheetTitle>
+            <SheetDescription className="text-base">
+              {createdPatterns.length} {createdPatterns.length === 1 ? 'pattern' : 'patterns'} identified, sorted by frequency
             </SheetDescription>
           </SheetHeader>
 
@@ -201,67 +274,78 @@ export function RecordsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {createdPatterns.map((pattern) => {
+                {createdPatterns.map((pattern, index) => {
                   const patternId = pattern.id || pattern.tempId
                   const isSaving = savingPatternIds.has(patternId || '')
+                  const isCreatingSolution = creatingSolutionIds.has(patternId || '')
                   const isSaved = !pattern.isTemporary
 
                   return (
                     <div
                       key={patternId}
-                      className="border rounded-lg p-4 space-y-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+                      className="border-2 rounded-xl p-5 space-y-4 bg-gradient-to-br from-white to-slate-50 shadow-md hover:shadow-xl transition-all duration-200 hover:border-purple-200"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{pattern.title}</h3>
-                            {isSaved && (
-                              <Badge variant="default" className="bg-green-500">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Saved
-                              </Badge>
-                            )}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700 font-bold text-sm">
+                            {index + 1}
                           </div>
-                          <p className="text-sm text-slate-600 mb-3">
-                            {pattern.description}
-                          </p>
-                          
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="font-medium text-slate-700">Priority:</span>{" "}
-                              <Badge variant={pattern.priority > 7 ? "destructive" : "default"}>
-                                {pattern.priority}
-                              </Badge>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-bold text-xl text-slate-800">{pattern.title}</h3>
+                              {isSaved && (
+                                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                  Saved
+                                </Badge>
+                              )}
                             </div>
-                            <div>
-                              <span className="font-medium text-slate-700">Frequency:</span>{" "}
-                              <span className="text-slate-600">{pattern.frequency}</span>
-                            </div>
-                            {pattern.time_range && (
+                            <p className="text-sm text-slate-600 leading-relaxed">
+                              {pattern.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-4 p-4 bg-white rounded-lg border border-slate-100">
+                        <div className="text-center">
+                          <div className="text-xs font-medium text-slate-500 mb-1">Priority</div>
+                          <Badge 
+                            variant={pattern.priority > 7 ? "destructive" : "default"}
+                            className="text-base font-bold px-3 py-1"
+                          >
+                            {pattern.priority}
+                          </Badge>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs font-medium text-slate-500 mb-1">Frequency</div>
+                          <div className="text-lg font-bold text-blue-600">{pattern.frequency}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs font-medium text-slate-500 mb-1">Incidents</div>
+                          <div className="text-lg font-bold text-slate-700">{pattern.incident_ids?.length || 0}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs font-medium text-slate-500 mb-1">Time Range</div>
+                          <div className="text-xs font-semibold text-slate-600">
+                            {pattern.time_range ? (
                               <>
-                                <div className="col-span-2">
-                                  <span className="font-medium text-slate-700">Time Range:</span>{" "}
-                                  <span className="text-slate-600">
-                                    {new Date(pattern.time_range.start).toLocaleDateString()} - {new Date(pattern.time_range.end).toLocaleDateString()}
-                                  </span>
-                                </div>
+                                {new Date(pattern.time_range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {' - '}
+                                {new Date(pattern.time_range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               </>
-                            )}
-                            <div className="col-span-2">
-                              <span className="font-medium text-slate-700">Incidents:</span>{" "}
-                              <span className="text-slate-600">{pattern.incident_ids?.length || 0}</span>
-                            </div>
+                            ) : 'N/A'}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 pt-2 border-t">
+                      <div className="flex gap-3 pt-2">
                         <Button
-                          onClick={() => handleSavePattern(pattern)}
-                          disabled={isSaving || isSaved}
+                          onClick={() => handleSavePattern(pattern, false)}
+                          disabled={isSaving || isSaved || isCreatingSolution}
                           size="sm"
-                          variant={isSaved ? "outline" : "default"}
-                          className="flex-1"
+                          variant="outline"
+                          className="flex-1 border-slate-300 hover:bg-slate-50"
                         >
                           {isSaving ? (
                             <>
@@ -282,12 +366,21 @@ export function RecordsPage() {
                         </Button>
                         <Button
                           onClick={() => handleCreateSolution(pattern)}
+                          disabled={isCreatingSolution}
                           size="sm"
-                          variant="secondary"
-                          className="flex-1"
+                          className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg border-0"
                         >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Create Solution
+                          {isCreatingSolution ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Creating...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Create Solution
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
