@@ -11,7 +11,13 @@ interface SidebarProps {
 }
 
 export function Sidebar({ expanded = false }: SidebarProps) {
-  const pathname = usePathname()
+  let pathname = '/'
+  try {
+    pathname = usePathname()
+  } catch (error) {
+    // Handle SSR case where usePathname might not be available
+    console.log('Pathname not available during SSR')
+  }
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutGrid },

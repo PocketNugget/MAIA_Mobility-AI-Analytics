@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
         const feedbackTexts = cleanedEntities.map((entity: any) => entity.text);
 
-        let analyzedFeedback = [];
+        let analyzedFeedback: any[] = [];
         if (feedbackTexts.length > 0) {
             const groqResult = await analyzeTwitterFeedback(feedbackTexts);
             analyzedFeedback = parseAndValidateGroqResponse(groqResult, feedbackTexts.length);

@@ -1,35 +1,28 @@
-import { generateSolutionsForPattern } from "@/lib/groq";
-import { Pattern } from "@/lib/types";
-import { NextRequest, NextResponse } from "next/server";
-import {mockPatterns} from "@/lib/mockPatterns";
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
-export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
 
-        // Option 1: Pass full pattern as JSON string
-        const patternJson = searchParams.get("pattern");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-        let testPattern: Pattern= mockPatterns[0];
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-        const solutions = await generateSolutionsForPattern(testPattern);
-
-        return NextResponse.json({
-            success: true,
-            pattern: {
-                id: testPattern.id,
-                title: testPattern.title
-            },
-            solutions
-        });
-    } catch (error: any) {
-        console.error("Pattern analysis error:", error.message);
-        return NextResponse.json(
-            {
-                success: false,
-                error: error.message || "Failed to generate solutions"
-            },
-            { status: 500 }
-        );
-    }
+  try {
+    return NextResponse.json({
+      success: true,
+      message: 'Test endpoint is working',
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Error in tests:', error)
+    return NextResponse.json(
+      { error: 'Test failed' },
+      { status: 500 }
+    )
+  }
 }

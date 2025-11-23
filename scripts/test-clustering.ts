@@ -113,16 +113,17 @@ const patterns = clusterIncidents(sampleIncidents, {
   },
 });
 
-console.log(`Patterns created: ${patterns.length}\n`);
+const resolvedPatterns = await patterns;
+console.log(`Patterns created: ${resolvedPatterns.length}\n`);
 console.log('='.repeat(80));
 
-patterns.forEach((pattern, index) => {
+resolvedPatterns.forEach((pattern, index) => {
   console.log(`\nPattern ${index + 1}:`);
   console.log(`Title: ${pattern.title}`);
   console.log(`Description: ${pattern.description}`);
   console.log(`Priority: ${pattern.priority}`);
   console.log(`Frequency: ${pattern.frequency}`);
-  console.log(`Time Range: ${pattern.timeRange?.start.toISOString()} → ${pattern.timeRange?.end.toISOString()}`);
+  console.log(`Time Range: ${pattern.timeRangeStart} → ${pattern.timeRangeEnd}`);
   console.log(`Incident IDs: ${pattern.incidentIds?.join(', ')}`);
   console.log(`\nFilters:`);
   console.log(JSON.stringify(pattern.filters, null, 2));
@@ -130,7 +131,7 @@ patterns.forEach((pattern, index) => {
 });
 
 // Verify all incidents were clustered
-const totalIncidentsInPatterns = patterns.reduce((sum, p) => sum + p.frequency, 0);
+const totalIncidentsInPatterns = resolvedPatterns.reduce((sum, p) => sum + p.frequency, 0);
 console.log(`\nTotal incidents in patterns: ${totalIncidentsInPatterns}`);
 console.log(`Original incidents: ${sampleIncidents.length}`);
 console.log(`Coverage: ${((totalIncidentsInPatterns / sampleIncidents.length) * 100).toFixed(1)}%`);

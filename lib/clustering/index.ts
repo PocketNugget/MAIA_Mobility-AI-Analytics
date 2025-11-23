@@ -247,7 +247,7 @@ export async function clusterIncidents(
   
   // Cluster incidents using improved DBSCAN approach
   console.log('Running DBSCAN clustering...');
-  const clusters = await dbscanClustering(normalized, fullOptions, embeddings);
+  const clusters = await dbscanClustering(normalized, fullOptions as Required<ClusteringOptions>, embeddings);
   console.log('Clusters created:', clusters.length);
   console.log('Cluster sizes:', clusters.map(c => c.incidents.length));
   
