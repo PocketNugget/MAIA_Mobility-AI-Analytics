@@ -276,42 +276,47 @@ export function DashboardPage() {
     setDraggingComponentType(null)
   }
 
-  const handleDrop = (_layout: Layout[], layoutItem: Layout, event: DragEvent) => {
-    const componentType = event.dataTransfer?.getData(DATA_TRANSFER_TYPE) || draggingComponentType
+  const handleDrop = (_layout: Layout[], layoutItem: Layout, event: Event) => {
+    const dragEvent = event as unknown as DragEvent
+    const componentType = dragEvent.dataTransfer?.getData(DATA_TRANSFER_TYPE) || draggingComponentType
     if (!componentType) return
     const defaults = getComponentGridDefaults(componentType)
     const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
-    // Derive drop col/row from cursor and center the item under the cursor
-    let targetX = layoutItem.x
-    let targetY = layoutItem.y
-
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      const colWidth =
-        (containerWidth - GRID_MARGIN[0] * (GRID_COLS - 1) - GRID_CONTAINER_PADDING[0] * 2) / GRID_COLS
-      const relativeX = event.clientX - rect.left - GRID_CONTAINER_PADDING[0]
-      const relativeY = event.clientY - rect.top - GRID_CONTAINER_PADDING[1]
-      const col = Math.floor(relativeX / (colWidth + GRID_MARGIN[0]))
-      const row = Math.floor(relativeY / (GRID_ROW_HEIGHT + GRID_MARGIN[1]))
-      targetX = clamp(col - Math.floor(defaults.w / 2), 0, GRID_COLS - defaults.w)
-      targetY = Math.max(row - Math.floor(defaults.h / 2), 0)
-    } else {
-      targetX = clamp(layoutItem.x - Math.floor(defaults.w / 2), 0, GRID_COLS - defaults.w)
-      targetY = Math.max(layoutItem.y - Math.floor(defaults.h / 2), 0)
-    }
+    // Since the drag image is centered on the cursor, use layoutItem position directly
+    const targetX = clamp(layoutItem.x, 0, GRID_COLS - defaults.w)
+    const targetY = Math.max(layoutItem.y, 0)
 
     addComponent(componentType, { x: targetX, y: targetY })
     setDraggingComponentType(null)
   }
 
-  const handleDropDragOver = (event: DragEvent) => {
+  const handleDropDragOver = (event: any) => {
     event.preventDefault()
     const componentType = event.dataTransfer?.getData(DATA_TRANSFER_TYPE) || draggingComponentType || ""
     if (!draggingComponentType && componentType) {
       setDraggingComponentType(componentType)
     }
     const defaults = getComponentGridDefaults(componentType)
+
+    // Calculate grid position from cursor, accounting for centered drag image
+    if (containerRef.current && event.clientX && event.clientY) {
+      const rect = containerRef.current.getBoundingClientRect()
+      const colWidth = (containerWidth - GRID_MARGIN[0] * (GRID_COLS - 1) - GRID_CONTAINER_PADDING[0] * 2) / GRID_COLS
+      const relativeX = event.clientX - rect.left - GRID_CONTAINER_PADDING[0]
+      const relativeY = event.clientY - rect.top - GRID_CONTAINER_PADDING[1]
+
+      // Calculate which grid cell the cursor is over
+      const col = Math.floor(relativeX / (colWidth + GRID_MARGIN[0]))
+      const row = Math.floor(relativeY / (GRID_ROW_HEIGHT + GRID_MARGIN[1]))
+
+      // Center the component under cursor by offsetting by half its size
+      const x = Math.max(0, Math.min(col - Math.floor(defaults.w / 2), GRID_COLS - defaults.w))
+      const y = Math.max(0, row - Math.floor(defaults.h / 2))
+
+      return { w: defaults.w, h: defaults.h, x, y }
+    }
+
     return { w: defaults.w, h: defaults.h }
   }
 
@@ -320,72 +325,96 @@ export function DashboardPage() {
     : undefined
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="flex-1 p-8 overflow-auto">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">
-              {isEditMode
-                ? "Drag components to move, resize from edges and corners"
-                : "Real-time mobility insights and alerts"
-              }
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Button
-              onClick={() => {
-                setIsEditMode((prev) => {
-                  const next = !prev
-                  if (!next) setIsSidebarOpen(false)
-                  return next
-                })
-              }}
-              variant={isEditMode ? "default" : "outline"}
-              size="default"
-              className={`flex items-center gap-2 transition-all ${
-                isEditMode
-                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              {isEditMode ? (
-                <>
-                  <Eye className="w-4 h-4" />
-                  View Only
-                </>
-              ) : (
-                <>
-                  <Edit3 className="w-4 h-4" />
-                  Edit Layout
-                </>
-              )}
-            </Button>
-            {isEditMode && (
-              <Button
-                onClick={() => {
-                  setIsEditMode(true)
-                  setIsSidebarOpen(true)
-                }}
-                variant="default"
-                size="default"
-                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-              >
-                <Plus className="w-4 h-4" />
-                Add Component
-              </Button>
-            )}
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 relative">
+      {/* Animated background pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f9ff_1px,transparent_1px),linear-gradient(to_bottom,#f0f9ff_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+
+      <div className="flex-1 overflow-auto relative z-10">
+        {/* Header Section */}
+        <div className="sticky top-0 z-20 bg-gradient-to-r from-white/90 via-blue-50/90 to-white/90 backdrop-blur-xl border-b border-blue-200/40 shadow-lg shadow-blue-500/5">
+          <div className="px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 bg-clip-text text-transparent mb-2 animate-gradient bg-[length:200%_auto]">
+                  Dashboard
+                </h1>
+                <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                  {isEditMode ? (
+                    <>
+                      <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        EDIT MODE
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-500">Drag to move, resize from edges</span>
+                    </>
+                  ) : (
+                    <span className="bg-gradient-to-r from-slate-700 to-slate-600 bg-clip-text text-transparent">
+                      Real-time mobility insights and analytics
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => {
+                    setIsEditMode((prev) => {
+                      const next = !prev
+                      if (!next) setIsSidebarOpen(false)
+                      return next
+                    })
+                  }}
+                  variant={isEditMode ? "default" : "outline"}
+                  size="default"
+                  className={`flex items-center gap-2 transition-all duration-150 font-bold ${
+                    isEditMode
+                      ? "bg-gradient-to-r from-blue-600 via-blue-700 to-blue-600 hover:from-blue-700 hover:via-blue-800 hover:to-blue-700 text-white shadow-xl shadow-blue-500/50 border-0 hover:shadow-2xl hover:shadow-blue-500/60 hover:scale-105"
+                      : "border-2 border-slate-300 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50 hover:border-blue-400 hover:shadow-lg"
+                  }`}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      View Mode
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="w-4 h-4" />
+                      Edit Layout
+                    </>
+                  )}
+                </Button>
+                {isEditMode && (
+                  <Button
+                    onClick={() => {
+                      setIsEditMode(true)
+                      setIsSidebarOpen(true)
+                    }}
+                    variant="default"
+                    size="default"
+                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-500 hover:from-emerald-600 hover:via-emerald-700 hover:to-emerald-600 text-white shadow-xl shadow-emerald-500/50 border-0 font-bold hover:shadow-2xl hover:shadow-emerald-500/60 hover:scale-105 transition-all duration-150"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Component
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-      {isEditMode && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
-          <p className="text-sm text-blue-900 font-medium">
-            Edit Mode Active - Drag to move • Grab edges to resize • Changes save automatically
-          </p>
-        </div>
-      )}
+        {/* Main Content */}
+        <div className="px-8 py-8">
+          <style jsx global>{`
+            @keyframes gradient {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            .animate-gradient {
+              animation: gradient 3s ease infinite;
+            }
+          `}</style>
 
       <style jsx global>{`
         .react-grid-layout {
@@ -394,23 +423,36 @@ export function DashboardPage() {
           padding-bottom: 40px;
         }
         .react-grid-item {
-          transition: all 200ms ease;
-          transition-property: left, top, width, height;
+          transition: all 100ms ease-out !important;
+          transition-property: left, top, width, height !important;
           margin-bottom: 8px;
           box-sizing: border-box;
+        }
+        .react-grid-item.resizing {
+          transition: none !important;
         }
         .react-grid-item > div {
           width: 100% !important;
           height: 100% !important;
           box-sizing: border-box;
+          transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), filter 150ms ease !important;
         }
         .react-grid-item.react-dragging {
           z-index: 100;
-          transition: none;
+        }
+        .react-grid-item.react-dragging > div {
+          transform: scale(1.05) rotate(2deg) !important;
+          filter: drop-shadow(0 20px 40px rgba(59, 130, 246, 0.4)) !important;
+          transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 150ms ease !important;
+        }
+        .react-grid-item:not(.react-dragging):hover > div {
+          transform: translateY(-4px) !important;
+          filter: drop-shadow(0 12px 24px rgba(0,0,0,0.15)) !important;
         }
         .edit-mode-item:hover {
-          border-color: rgba(59, 130, 246, 0.6) !important;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.8) !important;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 8px 24px rgba(59, 130, 246, 0.2) !important;
+          background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(239,246,255,0.9)) !important;
         }
         .react-grid-item img {
           pointer-events: none;
@@ -517,7 +559,7 @@ export function DashboardPage() {
         }
       `}</style>
 
-      <div className="relative w-full" ref={containerRef}>
+      <div className="relative w-full min-h-[calc(100vh-180px)]" ref={containerRef}>
         <GridLayout
           className="layout"
           layout={layout}
@@ -538,25 +580,53 @@ export function DashboardPage() {
           resizeHandles={['se', 'sw', 'ne', 'nw', 'e', 'w', 'n', 's']}
           autoSize={true}
         >
-          {layout.map((item) => (
+          {layout.map((item, index) => {
+            // Assign a gradient color based on position for variety
+            const gradientColors = [
+              'from-blue-400/60 via-cyan-400/60 to-blue-400/60',
+              'from-purple-400/60 via-pink-400/60 to-purple-400/60',
+              'from-emerald-400/60 via-teal-400/60 to-emerald-400/60',
+              'from-orange-400/60 via-amber-400/60 to-orange-400/60',
+              'from-rose-400/60 via-pink-400/60 to-rose-400/60',
+              'from-indigo-400/60 via-blue-400/60 to-indigo-400/60',
+            ];
+            const gradientColor = gradientColors[index % gradientColors.length];
+
+            return (
             <div
               key={item.i}
-              className={`${isEditMode ? 'edit-mode-item' : ''}`}
+              className={`group/item transition-all duration-100 ${isEditMode ? 'edit-mode-item' : ''}`}
               style={{
-                border: isEditMode ? '2px dashed rgba(59, 130, 246, 0.3)' : 'none',
-                borderRadius: '8px',
-                transition: 'border 0.2s ease',
+                border: isEditMode ? '3px dashed rgba(59, 130, 246, 0.3)' : 'none',
+                borderRadius: '20px',
+                transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)',
                 backgroundColor: isEditMode ? 'rgba(255, 255, 255, 0.5)' : 'transparent',
                 width: '100%',
                 height: '100%',
                 display: 'flex',
-                overflow: 'hidden',
+                overflow: 'visible',
+                position: 'relative',
               }}
             >
-              {renderGridItem(item.i)}
+              {/* Gradient border effect */}
+              <div className={`absolute inset-0 rounded-[20px] bg-gradient-to-br ${gradientColor} opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 -z-30`}></div>
+
+              {/* Shadow layers for depth */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-[20px] blur-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-150"></div>
+              <div className="absolute inset-0 -z-20 bg-gradient-to-br from-blue-600/10 to-cyan-600/10 rounded-[20px] blur-2xl scale-95 opacity-0 group-hover/item:opacity-100 transition-all duration-150"></div>
+
+              {/* Main content with glass effect */}
+              <div className="w-full h-full rounded-[20px] overflow-hidden backdrop-blur-sm bg-white/90 shadow-xl shadow-slate-900/5 group-hover/item:shadow-2xl group-hover/item:shadow-blue-500/10 transition-all duration-100 relative" style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95))'
+              }}>
+                <div className="w-full h-full rounded-[20px] overflow-hidden">
+                  {renderGridItem(item.i)}
+                </div>
+              </div>
             </div>
-          ))}
+          )})}
         </GridLayout>
+        </div>
       </div>
       </div>
 

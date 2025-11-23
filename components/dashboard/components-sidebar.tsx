@@ -39,26 +39,40 @@ export function ComponentsSidebar({
     event.dataTransfer.setData(DATA_TRANSFER_TYPE, componentId)
     event.dataTransfer.setData("text/plain", componentId)
     event.dataTransfer.effectAllowed = "copy"
-    const size = getDragPreviewSize?.(componentId)
-    if (size) {
-      const ghost = document.createElement("div")
-      ghost.style.width = `${size.width}px`
-      ghost.style.height = `${size.height}px`
-      ghost.style.background = "transparent"
-      ghost.style.position = "absolute"
-      ghost.style.top = "-9999px"
-      ghost.style.left = "-9999px"
-      document.body.appendChild(ghost)
-      event.dataTransfer.setDragImage(ghost, size.width / 2, size.height / 2)
+
+    // Get the actual grid size for this component type
+    const gridSize = getDragPreviewSize?.(componentId)
+
+    if (gridSize) {
+      // Create a drag preview that matches the grid item size
+      const dragImage = document.createElement("div")
+      dragImage.style.position = "absolute"
+      dragImage.style.top = "-9999px"
+      dragImage.style.left = "-9999px"
+      dragImage.style.width = `${gridSize.width}px`
+      dragImage.style.height = `${gridSize.height}px`
+      dragImage.style.background = "rgba(59, 130, 246, 0.2)"
+      dragImage.style.border = "2px dashed rgba(59, 130, 246, 0.5)"
+      dragImage.style.borderRadius = "8px"
+      dragImage.style.pointerEvents = "none"
+      document.body.appendChild(dragImage)
+
+      // Center the drag image on the cursor
+      event.dataTransfer.setDragImage(dragImage, gridSize.width / 2, gridSize.height / 2)
+
       // Clean up after the drag starts
       requestAnimationFrame(() => {
-        document.body.removeChild(ghost)
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage)
+        }
       })
     } else {
-      const target = event.currentTarget
+      // Fallback: use the sidebar card as drag preview
+      const target = event.currentTarget as HTMLElement
       const rect = target.getBoundingClientRect()
       event.dataTransfer.setDragImage(target, rect.width / 2, rect.height / 2)
     }
+
     onComponentDragStart?.(componentId)
   }
 
