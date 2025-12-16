@@ -33,13 +33,13 @@ The system uses advanced pattern recognition to identify root causes of transpor
 ## Screenshots
 
 ### Dashboard Analytics
-![Dashboard Analytics](https://placehold.co/800x450?text=Dashboard+Analytics+Placeholder)
+![Dashboard Analytics](screenshots/maindashboard.png)
 
 ### Pattern Recognition & Clustering
-![Pattern Recognition](https://placehold.co/800x450?text=Pattern+Recognition+Placeholder)
+![Pattern Recognition](screenshots/records.png)
 
 ### AI Solution Proposals
-![Solutions View](https://placehold.co/800x450?text=Solutions+Management+Placeholder)
+![Solutions View](screenshots/ai%20analysis.png)
 
 ---
 
